@@ -1,0 +1,55 @@
+public class GM implements GM_Interface {
+    private int tamMem;
+    private int tamPg;
+    private boolean[] pageTable;
+
+    public GM(int tamMem, int tamPg) {
+        this.tamMem = tamMem;
+        this.tamPg = tamPg;
+        this.pageTable = new boolean[tamMem / tamPg];
+    }
+
+    @Override
+    public int[] aloca(int nroPalavras, int[] tabelaPaginas) {
+        int partes = nroPalavras / tamPg;
+        if (nroPalavras % tamPg != 0) {
+            partes++;
+        }
+        if (partes > pageTable.length) {
+            return null;
+        }
+
+        int[] framesLivres = getFramesLivres();
+
+        if (partes > framesLivres.length) {
+            return null;
+        }
+
+        tabelaPaginas = new int[partes];
+        for (int i = 0; i < partes; i++) {
+            pageTable[framesLivres[i]] = true;
+            tabelaPaginas[i] = framesLivres[i];
+        }
+
+        return tabelaPaginas;
+    }
+
+    @Override
+    public void desaloca(int[] tabelaPaginas) {
+        for (int i = 0; i < tabelaPaginas.length; i++) {
+            pageTable[tabelaPaginas[i]] = false;
+        }
+    }
+    
+    private int[] getFramesLivres() {
+        int[] framesLivres = new int[pageTable.length];
+        int count = 0;
+        for (int i = 0; i < pageTable.length; i++) {
+            if (!pageTable[i]) {
+                framesLivres[count] = i;
+                count++;
+            }
+        }
+        return framesLivres;
+    }
+}

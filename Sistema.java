@@ -484,10 +484,12 @@ public class Sistema {
 		public InterruptHandling ih;
 		public SysCallHandling sc;
 		public Utilities utils;
+		public GM gm;
 
-		public SO(HW hw) {
+		public SO(HW hw, int tamPg) {
 			ih = new InterruptHandling(hw); // rotinas de tratamento de int
 			sc = new SysCallHandling(hw); // chamadas de sistema
+			gm = new GM(hw.mem.pos.length, tamPg); // gerenciador de memoria
 			hw.cpu.setAddressOfHandlers(ih, sc);
 			utils = new Utilities(hw);
 		}
@@ -500,9 +502,9 @@ public class Sistema {
 	public SO so;
 	public Programs progs;
 
-	public Sistema(int tamMem) {
+	public Sistema(int tamMem, int tamPg) { // tamMem = 1024 palavras, tamPg = 16 palavras
 		hw = new HW(tamMem);           // memoria do HW tem tamMem palavras
-		so = new SO(hw);
+		so = new SO(hw, tamPg);       // cria o sistema operacional
 		hw.cpu.setUtilities(so.utils); // permite cpu fazer dump de memoria ao avancar
 		progs = new Programs();
 	}
@@ -527,7 +529,7 @@ public class Sistema {
 	// -------------------------------------------------------------------------------------------------------
 	// ------------------- instancia e testa sistema
 	public static void main(String args[]) {
-		Sistema s = new Sistema(1024);
+		Sistema s = new Sistema(1024, 16); // tamMem = 1024 palavras, tamPg = 16 palavras
 		s.run();
 	}
 
