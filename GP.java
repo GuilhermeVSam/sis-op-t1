@@ -14,33 +14,30 @@ public class GP implements GP_Interface {
     }
 
     @Override
-    public boolean criaProcesso(Word[] programa) {
+    public boolean criaProcesso(Sistema.Word[] programa) {
         int tamanhoPrograma = programa.length;
         int[] paginasMemoria = gm.aloca(tamanhoPrograma);
         int programCounter = paginasMemoria[0];
-        if (paginasMemoria.length != 0) {
-            PCB processControlBlock = new PCB(getProcessID(), programCounter, new int[10], paginasMemoria);
-            prontos.add(processControlBlock);
-            return true;
-        }
+        PCB processControlBlock = new PCB(getProcessID(), programCounter, new int[10], paginasMemoria);
+        prontos.add(processControlBlock);
+        return true;
 
-        return false;
     }
 
     @Override
     public void desalocaProcesso(int id) {
         if (processID.get(id)) {
             for (PCB process : rodando) {
-                if (process.getProcessID() == id) {
-                    gm.desaloca(process.getPaginasMemoria());
+                if (process.processID == id) {
+                    gm.desaloca(process.memPage);
                     rodando.remove(process);
                     processID.set(id, false);
                     return;
                 }
             }
             for (PCB process : prontos) {
-                if (process.getProcessID() == id) {
-                    gm.desaloca(process.getPaginasMemoria());
+                if (process.processID == id) {
+                    gm.desaloca(process.memPage);
                     prontos.remove(process);
                     processID.set(id, false);
                     return;
