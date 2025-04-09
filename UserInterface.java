@@ -3,6 +3,8 @@ import java.util.Scanner;
 public class UserInterface {
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
+        Sistema sistema = new Sistema(1024, 8);
+        Programs programs = new Programs();
 
         while(true){
             clearScreen();
@@ -14,7 +16,9 @@ public class UserInterface {
                     try {
                         if (command.length == 2) {
                             String programName = command[1];
-                            System.out.println(command[0] + " " + command[1]);
+                            Sistema.Word[] programa = programs.retrieveProgram(programName);
+                            int procId = sistema.so.gp.criaProcesso(programa);
+                            System.out.println(procId);
                         } else {
                             throw new IndexOutOfBoundsException();
                         }
@@ -40,7 +44,7 @@ public class UserInterface {
                 }
                 case "exec" -> {
                     int id = Integer.parseInt(command[1]);
-                    //Exec id
+
                 }
                 case "traceOn" -> {
                     //traceOn()

@@ -1,37 +1,43 @@
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.Queue;
 
 public class GP implements GP_Interface {
     GM gm;
-    ArrayList<Boolean> processID;
+    Sistema.SO so;
+    boolean[] processID;
     Queue<PCB> rodando;
     Queue<PCB> prontos;
-    // PCB[] bloqueados;
+    // Queue<PCB> bloqueados;
 
-    public GP(GM gm) {
+    public GP(GM gm, Sistema.SO so) {
         this.gm = gm;
-        processID = new ArrayList<>();
+        this.so = so;
+        int maxProc = gm.getTamMem() / gm.getTamPg();
+        processID = new boolean[maxProc];
+        rodando = new LinkedList<>();
+        prontos = new LinkedList<>();
     }
 
     @Override
-    public boolean criaProcesso(Sistema.Word[] programa) {
+    public int criaProcesso(Sistema.Word[] programa) {
         int tamanhoPrograma = programa.length;
         int[] paginasMemoria = gm.aloca(tamanhoPrograma);
         int programCounter = paginasMemoria[0];
         PCB processControlBlock = new PCB(getProcessID(), programCounter, new int[10], paginasMemoria);
         prontos.add(processControlBlock);
-        return true;
-
+        so.utils.loadProgram(programa, paginasMemoria);
+        return processControlBlock.processID;
     }
 
     @Override
     public void desalocaProcesso(int id) {
-        if (processID.get(id)) {
+        if (processID[id]) {
             for (PCB process : rodando) {
                 if (process.processID == id) {
                     gm.desaloca(process.memPage);
                     rodando.remove(process);
-                    processID.set(id, false);
+                    processID[id] = false;
                     return;
                 }
             }
@@ -39,17 +45,25 @@ public class GP implements GP_Interface {
                 if (process.processID == id) {
                     gm.desaloca(process.memPage);
                     prontos.remove(process);
-                    processID.set(id, false);
+                    processID[id] = false;
                     return;
                 }
             }
         }
     }
 
+    public void load(int id){
+        for (PCB process : prontos) {
+            if(process.processID == id){
+
+            }
+        }
+    }
+
     public int getProcessID() {
-        for (int i = 0; i < processID.size(); i++) {
-            if (!processID.get(i)) {
-                processID.set(i, true);
+        for(int i = 0; i < processID.length; i++){
+            if(!processID[i]){
+                processID[i] = true;
                 return i;
             }
         }
