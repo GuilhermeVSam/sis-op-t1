@@ -26,7 +26,7 @@ public class GP implements GP_Interface {
         int programCounter = paginasMemoria[0];
         PCB processControlBlock = new PCB(getProcessID(), programCounter, new int[10], paginasMemoria);
         prontos.add(processControlBlock);
-        so.utils.loadProgram(programa, paginasMemoria);
+        so.utils.loadProgram(programa, paginasMemoria, gm.getTamPg());
         return processControlBlock.processID;
     }
 
@@ -55,7 +55,7 @@ public class GP implements GP_Interface {
     public void load(int id){
         for (PCB process : prontos) {
             if(process.processID == id){
-
+                so.utils.execProgram(process.memPage, gm.getTamPg());
             }
         }
     }

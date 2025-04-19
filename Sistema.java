@@ -145,16 +145,20 @@ public class Sistema {
 			irpt = Interrupts.noInterrupt;                // reset da interrupcao registrada
 		}
 
-		public void run() {                               // execucao da CPU supoe que o contexto da CPU, vide acima, 
-														  // esta devidamente setado
+		public void run(int fimDaPagina) {                               // execucao da CPU supoe que o contexto da CPU, vide acima,
+			// esta devidamente setado
 			cpuStop = false;
-			while (!cpuStop) {      // ciclo de instrucoes. acaba cfe resultado da exec da instrucao, veja cada caso.
 
+			while (!cpuStop) {      // ciclo de instrucoes. acaba cfe resultado da exec da instrucao, veja cada caso.
+				if(pc == fimDaPagina){
+					cpuStop = true;
+					break;
+				}
 				// --------------------------------------------------------------------------------------------------
 				// FASE DE FETCH
 				if (legal(pc)) { // pc valido
 					ir = m[pc];  // <<<<<<<<<<<< AQUI faz FETCH - busca posicao da memoria apontada por pc, guarda em ir
-					             // resto é dump de debug
+					// resto é dump de debug
 					if (debug) {
 						System.out.print("                                              regs: ");
 						for (int i = 0; i < 10; i++) {
@@ -168,8 +172,8 @@ public class Sistema {
 						u.dump(ir);
 					}
 
-				// --------------------------------------------------------------------------------------------------
-				// FASE DE EXECUCAO DA INSTRUCAO CARREGADA NO ir
+					// --------------------------------------------------------------------------------------------------
+					// FASE DE EXECUCAO DA INSTRUCAO CARREGADA NO ir
 					switch (ir.opc) {       // conforme o opcode (código de operação) executa
 
 						// Instrucoes de Busca e Armazenamento em Memoria
@@ -194,11 +198,11 @@ public class Sistema {
 								m[ir.p].opc = Opcode.DATA;
 								m[ir.p].p = reg[ir.ra];
 								pc++;
-                                if (debug) 
-								    {   System.out.print("                                  ");   
-									    u.dump(ir.p,ir.p+1);							
-									}
+								if (debug) {
+									System.out.print("                                  ");
+									u.dump(ir.p, ir.p + 1);
 								}
+							}
 							break;
 						case STX: // [Rd] ←Rs
 							if (legal(reg[ir.ra])) {
@@ -244,7 +248,7 @@ public class Sistema {
 							pc = ir.p;
 							break;
 						case JMPIM: // PC <- [A]
-							      pc = m[ir.p].p;
+							pc = m[ir.p].p;
 							break;
 						case JMPIG: // If Rc > 0 Then PC ← Rs Else PC ← PC +1
 							if (reg[ir.rb] > 0) {
@@ -289,13 +293,13 @@ public class Sistema {
 							}
 							break;
 						case JMPIGM: // If RC > 0 then PC <- [A] else PC++
-						    if (legal(ir.p)){
-							    if (reg[ir.rb] > 0) {
-								   pc = m[ir.p].p;
-							    } else {
-								  pc++;
-							   }
-						    }
+							if (legal(ir.p)) {
+								if (reg[ir.rb] > 0) {
+									pc = m[ir.p].p;
+								} else {
+									pc++;
+								}
+							}
 							break;
 						case JMPILM: // If RC < 0 then PC <- k else PC++
 							if (reg[ir.rb] < 0) {
@@ -321,12 +325,13 @@ public class Sistema {
 
 						case DATA: // pc está sobre área supostamente de dados
 							irpt = Interrupts.intInstrucaoInvalida;
+							cpuStop = true;
 							break;
 
 						// Chamadas de sistema
 						case SYSCALL:
 							sysCall.handle(); // <<<<< aqui desvia para rotina de chamada de sistema, no momento so
-												// temos IO
+							// temos IO
 							pc++;
 							break;
 
@@ -341,13 +346,7 @@ public class Sistema {
 							break;
 					}
 				}
-				// --------------------------------------------------------------------------------------------------
-				// VERIFICA INTERRUPÇÃO !!! - TERCEIRA FASE DO CICLO DE INSTRUÇÕES
-				if (irpt != Interrupts.noInterrupt) { // existe interrupção
-					ih.handle(irpt);                  // desvia para rotina de tratamento - esta rotina é do SO
-					cpuStop = true;                   // nesta versao, para a CPU
-				}
-			} // FIM DO CICLO DE UMA INSTRUÇÃO
+			}
 		}
 	}
 	// ------------------ C P U - fim
@@ -435,16 +434,36 @@ public class Sistema {
 			hw = _hw;
 		}
 
-		public void loadProgram(Word[] p, int[] posMemoriaAloc) {
-			/*Word[] m = hw.mem.pos; // m[] é o array de posições memória do hw
-			for (int i = 0; i < p.length; i++) {
-				m[i].opc = p[i].opc;
-				m[i].ra = p[i].ra;
-				m[i].rb = p[i].rb;
-				m[i].p = p[i].p;
-			}*/
+		public void loadProgram(Word[] p, int[] posMemoriaAloc, int tamPagina) {
+			Word[] m = hw.mem.pos; // m[] é o array de posições memória do hw
 			// Pega o programa e aloca nas posições indicadas pelo posMemoriaAloc
+			int pointer = 0;
+            for (int pagina : posMemoriaAloc) {
+                int localMemoria = tamPagina * pagina;
+                int fimDaPagina = tamPagina * (pagina + 1);
+                while (pointer < fimDaPagina) {
+                    if (pointer == p.length) break;
+                    m[localMemoria].opc = p[pointer].opc;
+                    m[localMemoria].ra = p[pointer].ra;
+                    m[localMemoria].rb = p[pointer].rb;
+                    m[localMemoria].p = p[pointer].p;
+                    localMemoria++;
+                    pointer++;
+                }
+            }
+		}
 
+		public void execProgram(int[] posMemoria, int tamPagina) {
+			System.out.println("---------------------------------- programa carregado na memoria");
+			dump(posMemoria[0], posMemoria[posMemoria.length - 1]); // dump da memoria nestas posicoes
+            for (int pagina : posMemoria) {
+				int programCounter = tamPagina * pagina;
+				int fimDaPagina = tamPagina * (pagina + 1);
+				hw.cpu.setContext(programCounter);
+				hw.cpu.run(fimDaPagina);
+            }
+			System.out.println("---------------------------------- memoria após execucao ");
+			dump(posMemoria[0], posMemoria[posMemoria.length - 1]); // dump da memoria nestas posicoes
 		}
 
 		// dump da memória
@@ -469,8 +488,8 @@ public class Sistema {
 			}
 		}
 
-		private void loadAndExec(Word[] p) {
-			loadProgram(p); // carga do programa na memoria
+/*		private void loadAndExec(Word[] p) {
+			loadProgram(p, ); // carga do programa na memoria
 			System.out.println("---------------------------------- programa carregado na memoria");
 			dump(0, p.length); // dump da memoria nestas posicoes
 			hw.cpu.setContext(0); // seta pc para endereço 0 - ponto de entrada dos programas
@@ -478,7 +497,7 @@ public class Sistema {
 			hw.cpu.run(); // cpu roda programa ate parar
 			System.out.println("---------------------------------- memoria após execucao ");
 			dump(0, p.length); // dump da memoria com resultado
-		}
+		}*/
 	}
 
 	public class SO {
@@ -514,7 +533,7 @@ public class Sistema {
 
 	public void run() {
 
-		so.utils.loadAndExec(progs.retrieveProgram("fatorialV2"));
+		// so.utils.loadAndExec(progs.retrieveProgram("fatorialV2"));
 
 		// so.utils.loadAndExec(progs.retrieveProgram("fatorial"));
 		// fibonacci10,
