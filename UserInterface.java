@@ -8,7 +8,6 @@ public class UserInterface {
 
         while(true){
             clearScreen();
-            System.out.printf("");
             String input = sc.nextLine();
             String[] command = input.split(" ");
             switch(command[0]){
@@ -17,7 +16,9 @@ public class UserInterface {
                         if (command.length == 2) {
                             String programName = command[1];
                             Sistema.Word[] programa = programs.retrieveProgram(programName);
+                            System.out.println(programa.length);
                             int procId = sistema.so.gp.criaProcesso(programa);
+                            System.out.println("Program " + programName + " created");
                             System.out.println(procId);
                         } else {
                             throw new IndexOutOfBoundsException();
@@ -44,7 +45,7 @@ public class UserInterface {
                 }
                 case "exec" -> {
                     int id = Integer.parseInt(command[1]);
-
+                    sistema.so.gp.load(id);
                 }
                 case "traceOn" -> {
                     //traceOn()
