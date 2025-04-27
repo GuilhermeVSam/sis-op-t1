@@ -64,8 +64,8 @@ public class GM implements GM_Interface {
 
     @Override
     public void desaloca(int[] tabelaPaginas) {
-        for (int i = 0; i < tabelaPaginas.length; i++) {
-            pageTable[tabelaPaginas[i]] = false;
+        for (int tabelaPagina : tabelaPaginas) {
+            pageTable[tabelaPagina] = false;
         }
     }
 

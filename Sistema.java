@@ -73,7 +73,7 @@ public class Sistema {
 	}
 
 	public enum Interrupts {           // possiveis interrupcoes que esta CPU gera
-		noInterrupt, intEnderecoInvalido, intInstrucaoInvalida, intOverflow, intSTOP;
+		noInterrupt, intEnderecoInvalido, intInstrucaoInvalida, intOverflow, intSTOP, NONE;
 	}
 
 	public class CPU {
@@ -117,8 +117,6 @@ public class Sistema {
 		public void setUtilities(Utilities _u) {
 			u = _u;                     // aponta para rotinas utilitárias - fazer dump da memória na tela
 		}
-
-
                                        // verificação de enderecamento 
 		private boolean legal(int e) { // todo acesso a memoria tem que ser verificado se é válido - 
 			                           // aqui no caso se o endereco é um endereco valido em toda memoria
@@ -145,15 +143,18 @@ public class Sistema {
 			irpt = Interrupts.noInterrupt;                // reset da interrupcao registrada
 		}
 
-		public void run(int fimDaPagina) {                               // execucao da CPU supoe que o contexto da CPU, vide acima,
+		public void resetRegisters() {
+			Arrays.fill(reg, 0);  // Clear all general-purpose registers
+			pc = -1;              // Invalidate PC
+			irpt = Interrupts.NONE;  // Clear interrupts
+		}
+
+
+		public void run() {                               // execucao da CPU supoe que o contexto da CPU, vide acima,
 			// esta devidamente setado
 			cpuStop = false;
 
 			while (!cpuStop) {      // ciclo de instrucoes. acaba cfe resultado da exec da instrucao, veja cada caso.
-				if(pc == fimDaPagina){
-					cpuStop = true;
-					break;
-				}
 				// --------------------------------------------------------------------------------------------------
 				// FASE DE FETCH
 				if (legal(pc)) { // pc valido
@@ -338,6 +339,7 @@ public class Sistema {
 						case STOP: // por enquanto, para execucao
 							sysCall.stop();
 							cpuStop = true;
+							resetRegisters();
 							break;
 
 						// Inexistente
@@ -434,36 +436,93 @@ public class Sistema {
 			hw = _hw;
 		}
 
-		public void loadProgram(Word[] p, int[] posMemoriaAloc, int tamPagina) {
-			Word[] m = hw.mem.pos; // m[] é o array de posições memória do hw
-			// Pega o programa e aloca nas posições indicadas pelo posMemoriaAloc
-			int pointer = 0;
-            for (int pagina : posMemoriaAloc) {
-                int localMemoria = tamPagina * pagina;
-                int fimDaPagina = tamPagina * (pagina + 1);
-                while (pointer < fimDaPagina) {
-                    if (pointer == p.length) break;
-                    m[localMemoria].opc = p[pointer].opc;
-                    m[localMemoria].ra = p[pointer].ra;
-                    m[localMemoria].rb = p[pointer].rb;
-                    m[localMemoria].p = p[pointer].p;
-                    localMemoria++;
-                    pointer++;
-                }
-            }
+		public void loadProgram(Word[] program, int[] allocatedPages, int pageSize) {
+			Word[] physicalMemory = hw.mem.pos;
+			int programCounter = 0;
+
+			for (int pageFrame : allocatedPages) {
+				if (pageFrame < 0 || pageFrame >= (hw.mem.pos.length / pageSize)) {
+					throw new IllegalArgumentException("Invalid page frame: " + pageFrame);
+				}
+
+				int physicalStart = pageFrame * pageSize;
+				int physicalEnd = physicalStart + pageSize;
+
+				while (programCounter < program.length && physicalStart < physicalEnd) {
+					Word source = program[programCounter];
+					Word dest = physicalMemory[physicalStart];
+
+					dest.opc = source.opc;
+					dest.ra = source.ra;
+					dest.rb = source.rb;
+					dest.p = source.p;
+
+
+					programCounter++;
+					physicalStart++;
+				}
+
+				if (programCounter >= program.length) break;
+			}
+
+			if (programCounter < program.length) {
+				throw new IllegalStateException("Program too large for allocated pages");
+			}
+		}
+
+		// Helper methods
+		private boolean isInstruction(Opcode opc) {
+			return opc != Opcode.DATA && opc != Opcode.___;
 		}
 
 		public void execProgram(int[] posMemoria, int tamPagina) {
 			System.out.println("---------------------------------- programa carregado na memoria");
-			dump(posMemoria[0], posMemoria[posMemoria.length - 1]); // dump da memoria nestas posicoes
-            for (int pagina : posMemoria) {
-				int programCounter = tamPagina * pagina;
-				int fimDaPagina = tamPagina * (pagina + 1);
-				hw.cpu.setContext(programCounter);
-				hw.cpu.run(fimDaPagina);
-            }
+			dump(posMemoria[0] * tamPagina, (posMemoria[posMemoria.length - 1] + 1) * tamPagina);
+
+			// Define o contexto inicial (primeira página)
+			int paginaAtual = 0;
+			int programCounter = posMemoria[paginaAtual] * tamPagina;
+			hw.cpu.setContext(programCounter);
+
+			// Loop principal de execução
+			while (true) {
+				// Verifica se o pc está dentro da página atual
+				if(hw.cpu.pc == -1) break;
+				int paginaDoPc = hw.cpu.pc / tamPagina;
+				boolean paginaValida = false;
+
+				// Verifica se o pc está em alguma das páginas alocadas
+				for (int pagina : posMemoria) {
+					if (pagina == paginaDoPc) {
+						paginaValida = true;
+						break;
+					}
+				}
+
+				// Se o pc saiu das páginas alocadas, termina a execução
+				if (!paginaValida) {
+					System.out.println("Execution stopped: PC left allocated memory area.");
+					break;
+				}
+
+				// Se atingiu um DATA ou área não executável, para
+				if (hw.mem.pos[hw.cpu.pc].opc == Opcode.DATA || hw.mem.pos[hw.cpu.pc].opc == Opcode.___) {
+					System.out.println("Execution stopped: Attempted to execute non-instruction area.");
+					break;
+				}
+
+				// Se encontrou um STOP, termina
+				if (hw.mem.pos[hw.cpu.pc].opc == Opcode.STOP) {
+					System.out.println("Execution stopped: STOP instruction encountered.");
+					break;
+				}
+
+				// Executa UMA instrução (a CPU atualiza o pc internamente)
+				hw.cpu.run();
+			}
+
 			System.out.println("---------------------------------- memoria após execucao ");
-			dump(posMemoria[0], posMemoria[posMemoria.length - 1]); // dump da memoria nestas posicoes
+			dump(posMemoria[0] * tamPagina, (posMemoria[posMemoria.length - 1] + 1) * tamPagina);
 		}
 
 		// dump da memória
