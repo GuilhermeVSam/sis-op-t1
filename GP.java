@@ -18,7 +18,7 @@ public class GP implements GP_Interface {
     }
 
     @Override
-    public int criaProcesso(Sistema.Word[] programa) {
+    public int criaProcesso(String programName, Sistema.Word[] programa) {
         int tamanhoPrograma = programa.length;
         int[] paginasMemoria = gm.aloca(tamanhoPrograma);
         if (paginasMemoria == null) {
@@ -31,7 +31,7 @@ public class GP implements GP_Interface {
 
         so.utils.loadProgram(programa, paginasMemoria, gm.getTamPg());
         int inicio = gm.traduzir(processID, 0);
-        PCB processControlBlock = new PCB(processID, inicio, new int[10], paginasMemoria);
+        PCB processControlBlock = new PCB(programName, processID, inicio, new int[10], paginasMemoria);
         prontos.add(processControlBlock);
 
         return processControlBlock.processID;
@@ -92,6 +92,67 @@ public class GP implements GP_Interface {
             }
         }
         throw new IllegalStateException("Process not found in ready queue.");
+    }
+
+    public void kill(int id){
+        for (PCB process : rodando) {
+            if (process.processID == id) {
+                rodando.remove(process);
+                return;
+            }
+        }
+        for (PCB process : prontos) {
+            if (process.processID == id) {
+                prontos.remove(process);
+                return;
+            }
+        }
+    }
+
+    public String listProcess(){
+        StringBuilder processes = new StringBuilder("ID" + "   " + "PID" + "    " + "NAME" + "     " + "STATE\n");
+        for (PCB process : rodando) {
+            processes.append(process).append("\n");
+        }
+        for (PCB process : prontos) {
+            processes.append(process).append("\n");
+        }
+
+        return processes.toString();
+    }
+
+    public void dumpID(int id) {
+
+        if (id < 0 || id >= processID.length || !processID[id]) {
+            throw new IllegalArgumentException("Invalid process ID.");
+        }
+
+        System.out.println("Dumping process with ID: " + id);
+        System.out.println("----------------------");
+        System.out.println("ID   PID   NAME   STATE");
+
+        for (PCB process : rodando) {
+            if (process.processID == id) {
+                int inicio = gm.traduzir(id, 0);
+                int fim = inicio + (process.memPage.length * gm.getTamPg()) - 1;
+                System.out.println(process);
+                System.out.println("Dumping memory from " + inicio + " to " + fim);
+                so.utils.dump(inicio, fim);
+                return;
+            }
+        }
+
+        for (PCB process : prontos) {
+            if (process.processID == id) {
+                int inicio = gm.traduzir(id, 0);
+                int fim = inicio + (process.memPage.length * gm.getTamPg()) - 1;
+                System.out.println(process);
+                so.utils.dump(inicio, fim);
+                return;
+            }
+        }
+
+        throw new IllegalStateException("Process not found.");
     }
 
     public int getProcessID() {

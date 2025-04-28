@@ -50,63 +50,62 @@ public class Sistema {
 
     public static void main(String args[]) {
         Sistema s = new Sistema(1024, 16);
-        s.run(); // Chama o método run()
     }
     // ------------------ C P U - fim
     // -----------------------------------------------------------------------
     // ------------------------------------------------------------------------------------------------------
 
-    public void run() {
-        Scheduler scheduler = new Scheduler(this);
-
-        // Primeiro: cria dois processos iniciais
-        Word[] simpleProg1 = createSimpleProgram();
-        Word[] simpleProg2 = createSimpleProgram();
-
-        int id1 = so.gp.criaProcesso(simpleProg1);
-        System.out.println("Processo " + id1 + " criado.");
-
-        int id2 = so.gp.criaProcesso(simpleProg2);
-        System.out.println("Processo " + id2 + " criado.");
-
-        // Cria a thread que executa os processos
-        Thread schedulerThread = new Thread(() -> {
-            while (true) {
-                if (!so.gp.prontos.isEmpty()) {  // verifica se há processos prontos
-                    scheduler.execAll();         // só executa se houver processo
-                }
-                try {
-                    Thread.sleep(100);            // descanso de 100ms
-                } catch (InterruptedException e) {
-                    break; // se a thread for interrompida, para
-                }
-            }
-        });
-
-        schedulerThread.start();
-
-        // Loop de comandos do usuário
-        Scanner scanner = new Scanner(System.in);
-
-        while (true) {
-            System.out.println("Digite um comando (load / exit): ");
-            String comando = scanner.nextLine();
-
-            if (comando.equalsIgnoreCase("load")) {
-                Word[] novoProg = createSimpleProgram();
-                int id = so.gp.criaProcesso(novoProg);
-                System.out.println("Novo processo " + id + " criado e colocado na fila de prontos.");
-            } else if (comando.equalsIgnoreCase("exit")) {
-                System.out.println("Encerrando sistema...");
-                schedulerThread.interrupt();
-                break;
-            } else {
-                System.out.println("Comando inválido!");
-            }
-        }
-
-        scanner.close();
-    }
+//    public void run() {
+//        Scheduler scheduler = new Scheduler(this);
+//
+//        // Primeiro: cria dois processos iniciais
+//        Word[] simpleProg1 = createSimpleProgram();
+//        Word[] simpleProg2 = createSimpleProgram();
+//
+//        int id1 = so.gp.criaProcesso(simpleProg1);
+//        System.out.println("Processo " + id1 + " criado.");
+//
+//        int id2 = so.gp.criaProcesso(simpleProg2);
+//        System.out.println("Processo " + id2 + " criado.");
+//
+//        // Cria a thread que executa os processos
+//        Thread schedulerThread = new Thread(() -> {
+//            while (true) {
+//                if (!so.gp.prontos.isEmpty()) {  // verifica se há processos prontos
+//                    scheduler.execAll();         // só executa se houver processo
+//                }
+//                try {
+//                    Thread.sleep(100);            // descanso de 100ms
+//                } catch (InterruptedException e) {
+//                    break; // se a thread for interrompida, para
+//                }
+//            }
+//        });
+//
+//        schedulerThread.start();
+//
+//        // Loop de comandos do usuário
+//        Scanner scanner = new Scanner(System.in);
+//
+//        while (true) {
+//            System.out.println("Digite um comando (load / exit): ");
+//            String comando = scanner.nextLine();
+//
+//            if (comando.equalsIgnoreCase("load")) {
+//                Word[] novoProg = createSimpleProgram();
+//                int id = so.gp.criaProcesso(novoProg);
+//                System.out.println("Novo processo " + id + " criado e colocado na fila de prontos.");
+//            } else if (comando.equalsIgnoreCase("exit")) {
+//                System.out.println("Encerrando sistema...");
+//                schedulerThread.interrupt();
+//                break;
+//            } else {
+//                System.out.println("Comando inválido!");
+//            }
+//        }
+//
+//        scanner.close();
+//    }
     // -------------------------------------------------------------------------------------------------------
 
     // --------------------H A R D W A R E - fim

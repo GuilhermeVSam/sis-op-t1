@@ -1,5 +1,5 @@
 public interface GP_Interface {
-    int criaProcesso(Sistema.Word[] programa);
+    int criaProcesso(String programName, Sistema.Word[] programa);
 
     void desalocaProcesso(int id);
 }

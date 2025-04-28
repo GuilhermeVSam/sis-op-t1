@@ -8,7 +8,6 @@ public class UserInterface {
         Scheduler scheduler = new Scheduler(sistema);
 
         while (true) {
-            clearScreen();
             String input = sc.nextLine();
             String[] command = input.split(" ");
             switch (command[0]) {
@@ -18,7 +17,7 @@ public class UserInterface {
                             String programName = command[1];
                             Sistema.Word[] programa = programs.retrieveProgram(programName);
                             System.out.println(programa.length);
-                            int procId = sistema.so.gp.criaProcesso(programa);
+                            int procId = sistema.so.gp.criaProcesso(programName, programa);
                             System.out.println("Program " + programName + " created");
                             System.out.println(procId);
                         } else {
@@ -30,14 +29,14 @@ public class UserInterface {
                 }
                 case "rm" -> {
                     int id = Integer.parseInt(command[1]);
+                    sistema.so.gp.kill(id);
                 }
                 case "ps" -> {
-                    //Lista Processos
+                    System.out.println(sistema.so.gp.listProcess());
                 }
                 case "dump" -> {
                     int id = Integer.parseInt(command[1]);
-                    // Puxa dados do programa
-                    System.out.println(id);
+                    sistema.so.gp.dumpID(id);
                 }
                 case "dumpM" -> {
                     String[] inicioFim = command[1].split(",");
@@ -65,10 +64,5 @@ public class UserInterface {
                 }
             }
         }
-    }
-
-    public static void clearScreen() {
-        System.out.print("\033[H\033[2J");
-        System.out.flush();
     }
 }
