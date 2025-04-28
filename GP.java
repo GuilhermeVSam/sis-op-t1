@@ -25,12 +25,17 @@ public class GP implements GP_Interface {
         if (paginasMemoria == null) {
             throw new IllegalStateException("Insufficient memory to allocate process.");
         }
-        int programCounter = paginasMemoria[0];
-        PCB processControlBlock = new PCB(getProcessID(), programCounter, new int[10], paginasMemoria);
+
+        int processID = getProcessID();
+        PCB processControlBlock = new PCB(processID, paginasMemoria[0], new int[10], paginasMemoria);
         prontos.add(processControlBlock);
+
+        gm.registraTabelaPaginas(processID, paginasMemoria);
+
         so.utils.loadProgram(programa, paginasMemoria, gm.getTamPg());
         return processControlBlock.processID;
     }
+
 
     @Override
     public void desalocaProcesso(int id) {
@@ -62,7 +67,7 @@ public class GP implements GP_Interface {
                 prontos.remove(process);
                 rodando.add(process);
                 process.processState = PCB.ProcessState.RUNNING;
-                so.utils.execProgram(process.memPage, gm.getTamPg());
+                so.utils.execProgram(process, process.memPage, gm.getTamPg());
                 desalocaProcesso(id);
                 return;
             }

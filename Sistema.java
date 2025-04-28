@@ -150,7 +150,7 @@ public class Sistema {
 		}
 
 
-		public void run() {                               // execucao da CPU supoe que o contexto da CPU, vide acima,
+		public void run(int pid, GM gm) {                               // execucao da CPU supoe que o contexto da CPU, vide acima,
 			// esta devidamente setado
 			cpuStop = false;
 
@@ -172,7 +172,7 @@ public class Sistema {
 						System.out.print("                      pc: " + pc + "       exec: ");
 						u.dump(ir);
 					}
-
+					int addrJMP, addrLDD, addrSTD;
 					// --------------------------------------------------------------------------------------------------
 					// FASE DE EXECUCAO DA INSTRUCAO CARREGADA NO ir
 					switch (ir.opc) {       // conforme o opcode (código de operação) executa
@@ -183,25 +183,28 @@ public class Sistema {
 							pc++;
 							break;
 						case LDD: // Rd <- [A]
-							if (legal(ir.p)) {
-								reg[ir.ra] = m[ir.p].p;
+							addrLDD = gm.traduzir(pid, ir.p); // traduzir endereco logico
+							if (legal(addrLDD)) {
+								reg[ir.ra] = m[addrLDD].p;
 								pc++;
 							}
 							break;
 						case LDX: // RD <- [RS] // NOVA
 							if (legal(reg[ir.rb])) {
-								reg[ir.ra] = m[reg[ir.rb]].p;
+								int memAddr = gm.traduzir(pid, reg[ir.rb]); // traduzir endereco logico
+								reg[ir.ra] = m[memAddr].p;
 								pc++;
 							}
 							break;
-						case STD: // [A] ← Rs
-							if (legal(ir.p)) {
-								m[ir.p].opc = Opcode.DATA;
-								m[ir.p].p = reg[ir.ra];
+						case STD:
+							addrSTD = gm.traduzir(pid, ir.p);
+							if (legal(addrSTD)) {
+								m[addrSTD].opc = Opcode.DATA;
+								m[addrSTD].p = reg[ir.ra];
 								pc++;
 								if (debug) {
 									System.out.print("                                  ");
-									u.dump(ir.p, ir.p + 1);
+									u.dump(addrSTD, addrSTD + 1);
 								}
 							}
 							break;
@@ -246,10 +249,12 @@ public class Sistema {
 
 						// Instrucoes JUMP
 						case JMP: // PC <- k
-							pc = ir.p;
+							addrJMP = gm.traduzir(pid, ir.p);
+							pc = addrJMP;
 							break;
 						case JMPIM: // PC <- [A]
-							pc = m[ir.p].p;
+							addrJMP = gm.traduzir(pid, ir.p);
+							pc = m[addrJMP].p;
 							break;
 						case JMPIG: // If Rc > 0 Then PC ← Rs Else PC ← PC +1
 							if (reg[ir.rb] > 0) {
@@ -260,43 +265,49 @@ public class Sistema {
 							break;
 						case JMPIGK: // If RC > 0 then PC <- k else PC++
 							if (reg[ir.rb] > 0) {
-								pc = ir.p;
+								addrJMP = gm.traduzir(pid, ir.p);
+								pc = addrJMP;
 							} else {
 								pc++;
 							}
 							break;
 						case JMPILK: // If RC < 0 then PC <- k else PC++
 							if (reg[ir.rb] < 0) {
-								pc = ir.p;
+								addrJMP = gm.traduzir(pid, ir.p);
+								pc = addrJMP;
 							} else {
 								pc++;
 							}
 							break;
 						case JMPIEK: // If RC = 0 then PC <- k else PC++
 							if (reg[ir.rb] == 0) {
-								pc = ir.p;
+								addrJMP = gm.traduzir(pid, ir.p);
+								pc = addrJMP;
 							} else {
 								pc++;
 							}
 							break;
 						case JMPIL: // if Rc < 0 then PC <- Rs Else PC <- PC +1
 							if (reg[ir.rb] < 0) {
-								pc = reg[ir.ra];
+								addrJMP = gm.traduzir(pid, reg[ir.ra]);
+								pc = addrJMP;
 							} else {
 								pc++;
 							}
 							break;
 						case JMPIE: // If Rc = 0 Then PC <- Rs Else PC <- PC +1
 							if (reg[ir.rb] == 0) {
-								pc = reg[ir.ra];
+								addrJMP = gm.traduzir(pid, reg[ir.ra]);
+								pc = addrJMP;
 							} else {
 								pc++;
 							}
 							break;
 						case JMPIGM: // If RC > 0 then PC <- [A] else PC++
-							if (legal(ir.p)) {
+							addrJMP = gm.traduzir(pid, ir.p);
+							if (legal(addrJMP)) {
 								if (reg[ir.rb] > 0) {
-									pc = m[ir.p].p;
+									pc = addrJMP;
 								} else {
 									pc++;
 								}
@@ -304,21 +315,24 @@ public class Sistema {
 							break;
 						case JMPILM: // If RC < 0 then PC <- k else PC++
 							if (reg[ir.rb] < 0) {
-								pc = m[ir.p].p;
+								addrJMP = gm.traduzir(pid, ir.p);
+								pc = addrJMP;
 							} else {
 								pc++;
 							}
 							break;
 						case JMPIEM: // If RC = 0 then PC <- k else PC++
 							if (reg[ir.rb] == 0) {
-								pc = m[ir.p].p;
+								addrJMP = gm.traduzir(pid, ir.p);
+								pc = addrJMP;
 							} else {
 								pc++;
 							}
 							break;
 						case JMPIGT: // If RS>RC then PC <- k else PC++
 							if (reg[ir.ra] > reg[ir.rb]) {
-								pc = ir.p;
+								addrJMP = gm.traduzir(pid, ir.p);
+								pc = addrJMP;
 							} else {
 								pc++;
 							}
@@ -342,6 +356,11 @@ public class Sistema {
 							resetRegisters();
 							break;
 
+						case ___:
+							// pc está sobre área supostamente de dados
+							irpt = Interrupts.intInstrucaoInvalida;
+							cpuStop = true;
+							break;
 						// Inexistente
 						default:
 							irpt = Interrupts.intInstrucaoInvalida;
@@ -431,9 +450,11 @@ public class Sistema {
 	// carga na memória
 	public class Utilities {
 		private HW hw;
+		private GM gm;
 
 		public Utilities(HW _hw) {
 			hw = _hw;
+			gm = GM.getInstance();
 		}
 
 		public void loadProgram(Word[] program, int[] allocatedPages, int pageSize) {
@@ -475,7 +496,7 @@ public class Sistema {
 			return opc != Opcode.DATA && opc != Opcode.___;
 		}
 
-		public void execProgram(int[] posMemoria, int tamPagina) {
+		public void execProgram(PCB pcb, int[] posMemoria, int tamPagina) {
 			System.out.println("---------------------------------- programa carregado na memoria");
 			dump(posMemoria[0] * tamPagina, (posMemoria[posMemoria.length - 1] + 1) * tamPagina);
 
@@ -516,9 +537,8 @@ public class Sistema {
 					System.out.println("Execution stopped: STOP instruction encountered.");
 					break;
 				}
-
 				// Executa UMA instrução (a CPU atualiza o pc internamente)
-				hw.cpu.run();
+				hw.cpu.run(pcb.processID, gm);
 			}
 
 			System.out.println("---------------------------------- memoria após execucao ");
@@ -569,7 +589,7 @@ public class Sistema {
 		public SO(HW hw, int tamPg) {
 			ih = new InterruptHandling(hw); // rotinas de tratamento de int
 			sc = new SysCallHandling(hw); // chamadas de sistema
-			gm = new GM(hw.mem.pos.length, tamPg); // gerenciador de memoria
+			gm = GM.getInstance(hw.mem.pos.length, tamPg); // gerenciador de memoria
 			gp = new GP(gm, this);
 			hw.cpu.setAddressOfHandlers(ih, sc);
 			utils = new Utilities(hw);

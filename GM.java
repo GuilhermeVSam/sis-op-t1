@@ -1,83 +1,92 @@
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public class GM implements GM_Interface {
-    private int tamMem;
-    private int tamPg;
-    private boolean[] pageTable;
+    private static GM instance;
 
-    public GM(int tamMem, int tamPg) {
+    private boolean[] frames;
+    private int tamPg;
+    private int tamMem;
+    private Map<Integer, Map<Integer, Integer>> tabelasDePaginas; // processo -> (pagina logica -> frame fisico)
+
+    private GM(int tamMem, int tamPg) {
         this.tamMem = tamMem;
         this.tamPg = tamPg;
-        this.pageTable = new boolean[tamMem / tamPg];
+        this.frames = new boolean[tamMem / tamPg];
+        this.tabelasDePaginas = new HashMap<>();
     }
 
-    public int getTamMem() {
-        return tamMem;
+    public static GM getInstance(int tamMem, int tamPg) {
+        if (instance == null) {
+            instance = new GM(tamMem, tamPg);
+        }
+        return instance;
     }
 
-    public void setTamMem(int tamMem) {
-        this.tamMem = tamMem;
+    public static GM getInstance() {
+        if (instance == null) {
+            throw new IllegalStateException("GM ainda não foi inicializado! Use getInstance(tamMem, tamPg) primeiro.");
+        }
+        return instance;
+    }
+
+    @Override
+    public int[] aloca(int tamProcesso) {
+        int numPaginas = (int) Math.ceil((double) tamProcesso / tamPg);
+        int[] paginas = new int[numPaginas];
+        int encontrado = 0;
+
+        for (int i = 0; i < frames.length && encontrado < numPaginas; i++) {
+            if (!frames[i]) {
+                frames[i] = true;
+                paginas[encontrado++] = i;
+            }
+        }
+
+        if (encontrado < numPaginas) {
+            // Falha: desaloca já o que foi alocado
+            for (int i = 0; i < encontrado; i++) {
+                frames[paginas[i]] = false;
+            }
+            return null;
+        }
+
+        return paginas;
+    }
+
+    public void registraTabelaPaginas(int idProcesso, int[] paginas) {
+        Map<Integer, Integer> tabela = new HashMap<>();
+        for (int paginaLogica = 0; paginaLogica < paginas.length; paginaLogica++) {
+            tabela.put(paginaLogica, paginas[paginaLogica]);
+        }
+        tabelasDePaginas.put(idProcesso, tabela);
+    }
+
+    @Override
+    public void desaloca(int[] paginas) {
+        for (int pagina : paginas) {
+            frames[pagina] = false;
+        }
+    }
+
+    public int traduzir(int idProcesso, int enderecoLogico) {
+        int paginaLogica = enderecoLogico / tamPg;
+        int deslocamento = enderecoLogico % tamPg;
+
+        Map<Integer, Integer> tabela = tabelasDePaginas.get(idProcesso);
+        if (tabela == null || !tabela.containsKey(paginaLogica)) {
+            throw new IllegalStateException("Endereço inválido ou processo não encontrado.");
+        }
+
+        int frameFisico = tabela.get(paginaLogica);
+        return frameFisico * tamPg + deslocamento;
     }
 
     public int getTamPg() {
         return tamPg;
     }
 
-    public void setTamPg(int tamPg) {
-        this.tamPg = tamPg;
-    }
-
-    public boolean[] getPageTable() {
-        return pageTable;
-    }
-
-    public void setPageTable(boolean[] pageTable) {
-        this.pageTable = pageTable;
-    }
-
-    @Override
-    public int[] aloca(int nroPalavras) {
-        int partes = nroPalavras / tamPg;
-        if (nroPalavras % tamPg != 0) {
-            partes++;
-        }
-        if (partes > pageTable.length) {
-            return null;
-        }
-
-        int[] framesLivres = getFramesLivres();
-
-        if (partes > framesLivres.length) {
-            return null;
-        }
-
-        int[] tabelaPaginas = new int[partes];
-        for (int i = 0; i < partes; i++) {
-            pageTable[framesLivres[i]] = true;
-            tabelaPaginas[i] = framesLivres[i];
-        }
-
-        return tabelaPaginas;
-    }
-
-    @Override
-    public void desaloca(int[] tabelaPaginas) {
-        for (int tabelaPagina : tabelaPaginas) {
-            pageTable[tabelaPagina] = false;
-        }
-    }
-
-    private int[] getFramesLivres() {
-        int[] framesLivres = new int[pageTable.length];
-        int count = 0;
-        for (int i = 0; i < pageTable.length; i++) {
-            if (!pageTable[i]) {
-                framesLivres[count] = i;
-                count++;
-            }
-        }
-        return framesLivres;
+    public int getTamMem() {
+        return tamMem;
     }
 }
