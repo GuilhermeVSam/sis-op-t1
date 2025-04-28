@@ -1,6 +1,3 @@
-import java.util.LinkedList;
-import java.util.Queue;
-
 public class Scheduler {
     private final int DELTA = 5; // número de instruções por time slice
     private Sistema sistema;
@@ -15,7 +12,7 @@ public class Scheduler {
     public void execAll() {
         while (!sistema.so.gp.prontos.isEmpty() || processoAtual != null) {
             if (processoAtual == null) {
-                processoAtual = sistema.so.gp.prontos.poll();
+                processoAtual = sistema.so.gp.loadNext();
                 if (processoAtual == null) {
                     break;
                 }
@@ -50,23 +47,26 @@ public class Scheduler {
             }
             processoAtual = null;
         }
-        
+
     }
 
     private void tratadorInterrupcao() {
-        System.out.println("Interrupção: salvando contexto do processo " + processoAtual.processID);
+        try {
+            System.out.println("Interrupção: salvando contexto do processo " + processoAtual.processID);
 
-        salvarContexto(processoAtual);
+            salvarContexto(processoAtual);
 
-        processoAtual.processState = PCB.ProcessState.READY;
-        sistema.so.gp.prontos.add(processoAtual);
+            sistema.so.gp.unload(processoAtual.processID);
 
-        processoAtual = sistema.so.gp.prontos.poll();
-        if (processoAtual != null) {
-            restaurarContexto(processoAtual);
+            processoAtual = sistema.so.gp.loadNext();
+
+            if (processoAtual != null) {
+                restaurarContexto(processoAtual);
+            }
+
+            contadorInstrucoes = 0;
+        } catch (NullPointerException ignored) {
         }
-
-        contadorInstrucoes = 0;
     }
 
     private void salvarContexto(PCB processo) {
@@ -77,6 +77,5 @@ public class Scheduler {
     private void restaurarContexto(PCB processo) {
         sistema.hw.cpu.setContext(processo.programCounter);
         sistema.hw.cpu.setRegisters(processo.registers.clone());
-
     }
 }
