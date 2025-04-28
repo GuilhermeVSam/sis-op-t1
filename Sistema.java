@@ -369,6 +369,30 @@ public class Sistema {
 				}
 			}
 		}
+		// GET e SET do pc
+		public int getPC() {
+			return pc;
+		
+		}
+
+		public void setPC(int pc) {
+			this.pc = pc;
+		}
+
+		// GET e SET dos registradores
+		public int[] getRegisters() {
+			return reg;
+		}
+
+		public void setRegisters(int[] reg) {
+			this.reg = reg;
+		}
+
+		// GET do cpuStop
+		public boolean isCpuStop() {
+			return cpuStop;
+		}
+
 	}
 	// ------------------ C P U - fim
 	// -----------------------------------------------------------------------
@@ -611,26 +635,75 @@ public class Sistema {
 	}
 
 	public void run() {
-
-		// so.utils.loadAndExec(progs.retrieveProgram("fatorialV2"));
-
-		// so.utils.loadAndExec(progs.retrieveProgram("fatorial"));
-		// fibonacci10,
-		// fibonacci10v2,
-		// progMinimo,
-		// fatorialWRITE, // saida
-		// fibonacciREAD, // entrada
-		// PB
-		// PC, // bubble sort
-	}
-	// ------------------- S I S T E M A - fim
-	// --------------------------------------------------------------
-	// -------------------------------------------------------------------------------------------------------
-
-	// -------------------------------------------------------------------------------------------------------
-	// ------------------- instancia e testa sistema
+		Scheduler scheduler = new Scheduler(this);
+	
+		// Primeiro: cria dois processos iniciais
+		Word[] simpleProg1 = createSimpleProgram();
+		Word[] simpleProg2 = createSimpleProgram();
+	
+		int id1 = so.gp.criaProcesso(simpleProg1);
+		System.out.println("Processo " + id1 + " criado.");
+	
+		int id2 = so.gp.criaProcesso(simpleProg2);
+		System.out.println("Processo " + id2 + " criado.");
+	
+		// Cria a thread que executa os processos
+		Thread schedulerThread = new Thread(() -> {
+			while (true) {
+				if (!so.gp.prontos.isEmpty()) {  // verifica se há processos prontos
+					scheduler.execAll();         // só executa se houver processo
+				}
+				try {
+					Thread.sleep(100);            // descanso de 100ms
+				} catch (InterruptedException e) {
+					break; // se a thread for interrompida, para
+				}
+			}
+		});
+	
+		schedulerThread.start();
+	
+		// Loop de comandos do usuário
+		Scanner scanner = new Scanner(System.in);
+	
+		while (true) {
+			System.out.println("Digite um comando (load / exit): ");
+			String comando = scanner.nextLine();
+	
+			if (comando.equalsIgnoreCase("load")) {
+				Word[] novoProg = createSimpleProgram();
+				int id = so.gp.criaProcesso(novoProg);
+				System.out.println("Novo processo " + id + " criado e colocado na fila de prontos.");
+			} 
+			else if (comando.equalsIgnoreCase("exit")) {
+				System.out.println("Encerrando sistema...");
+				schedulerThread.interrupt();
+				break;
+			} 
+			else {
+				System.out.println("Comando inválido!");
+			}
+		}
+	
+		scanner.close();
+	} 
+	
 	public static void main(String args[]) {
-		Sistema s = new Sistema(1024, 16); // tamMem = 1024 palavras, tamPg = 16 palavras
-		s.run();
+		Sistema s = new Sistema(1024, 16); 
+		s.run(); // Chama o método run()
 	}
+	
+	// Também fora da função run(), a função para criar programas simples:
+	public Word[] createSimpleProgram() {
+		return new Word[] {
+			new Word(Opcode.LDI, 0, -1, 0),
+			new Word(Opcode.ADDI, 0, -1, 1),
+			new Word(Opcode.ADDI, 0, -1, 1),
+			new Word(Opcode.ADDI, 0, -1, 1),
+			new Word(Opcode.ADDI, 0, -1, 1),
+			new Word(Opcode.ADDI, 0, -1, 1),
+			new Word(Opcode.STOP, -1, -1, -1)
+		};
+	}
+
 }
