@@ -1,4 +1,3 @@
-import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.Queue;
 
@@ -27,12 +26,14 @@ public class GP implements GP_Interface {
         }
 
         int processID = getProcessID();
-        PCB processControlBlock = new PCB(processID, paginasMemoria[0], new int[10], paginasMemoria);
-        prontos.add(processControlBlock);
 
         gm.registraTabelaPaginas(processID, paginasMemoria);
 
         so.utils.loadProgram(programa, paginasMemoria, gm.getTamPg());
+        int inicio = gm.traduzir(processID, 0);
+        PCB processControlBlock = new PCB(processID, inicio, new int[10], paginasMemoria);
+        prontos.add(processControlBlock);
+
         return processControlBlock.processID;
     }
 
@@ -61,14 +62,32 @@ public class GP implements GP_Interface {
         throw new IllegalStateException("Process not found.");
     }
 
+    public PCB loadNext() {
+        PCB process = prontos.poll();
+        assert process != null;
+        process.processState = PCB.ProcessState.RUNNING;
+        rodando.add(process);
+        return process;
+    }
+
     public void load(int id) {
         for (PCB process : prontos) {
             if (process.processID == id) {
                 prontos.remove(process);
                 rodando.add(process);
                 process.processState = PCB.ProcessState.RUNNING;
-                so.utils.execProgram(process, process.memPage, gm.getTamPg());
-                desalocaProcesso(id);
+                return;
+            }
+        }
+        throw new IllegalStateException("Process not found in ready queue.");
+    }
+
+    public void unload(int id) {
+        for (PCB process : rodando) {
+            if (process.processID == id) {
+                rodando.remove(process);
+                prontos.add(process);
+                process.processState = PCB.ProcessState.READY;
                 return;
             }
         }

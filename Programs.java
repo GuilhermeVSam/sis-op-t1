@@ -7,17 +7,9 @@
 
 public class Programs {
 
-    public Sistema.Word[] retrieveProgram(String pname) {
-        for (Program p : progs) {
-            if (p != null & p.name.equals(pname))
-                return p.image;
-        }
-        return null;
-    }
-
     public Program[] progs = {
             new Program("fatorial",
-                    new Sistema.Word[] {
+                    new Sistema.Word[]{
                             // este fatorial so aceita valores positivos. nao pode ser zero
                             // linha coment
                             new Sistema.Word(Sistema.Opcode.LDI, 0, -1, 7), // 0 r0 é valor a calcular fatorial
@@ -35,7 +27,7 @@ public class Programs {
                     }),
 
             new Program("fatorialV2",
-                    new Sistema.Word[] {
+                    new Sistema.Word[]{
                             new Sistema.Word(Sistema.Opcode.LDI, 0, -1, 5), // numero para colocar na memoria, ou pode ser lido
                             new Sistema.Word(Sistema.Opcode.STD, 0, -1, 19),
                             new Sistema.Word(Sistema.Opcode.LDD, 0, -1, 19),
@@ -55,11 +47,11 @@ public class Programs {
                             new Sistema.Word(Sistema.Opcode.SYSCALL, -1, -1, -1),
                             new Sistema.Word(Sistema.Opcode.STOP, -1, -1, -1), // POS 17
                             new Sistema.Word(Sistema.Opcode.DATA, -1, -1, -1), // POS 18
-                            new Sistema.Word(Sistema.Opcode.DATA, -1, -1, -1) } // POS 19
+                            new Sistema.Word(Sistema.Opcode.DATA, -1, -1, -1)} // POS 19
             ),
 
             new Program("progMinimo",
-                    new Sistema.Word[] {
+                    new Sistema.Word[]{
                             new Sistema.Word(Sistema.Opcode.LDI, 0, -1, 999),
                             new Sistema.Word(Sistema.Opcode.STD, 0, -1, 8),
                             new Sistema.Word(Sistema.Opcode.STD, 0, -1, 9),
@@ -77,7 +69,7 @@ public class Programs {
                     }),
 
             new Program("fibonacci10",
-                    new Sistema.Word[] { // mesmo que prog exemplo, so que usa r0 no lugar de r8
+                    new Sistema.Word[]{ // mesmo que prog exemplo, so que usa r0 no lugar de r8
                             new Sistema.Word(Sistema.Opcode.LDI, 1, -1, 0),
                             new Sistema.Word(Sistema.Opcode.STD, 1, -1, 20),
                             new Sistema.Word(Sistema.Opcode.LDI, 2, -1, 1),
@@ -111,7 +103,7 @@ public class Programs {
                     }),
 
             new Program("fibonacci10v2",
-                    new Sistema.Word[] { // mesmo que prog exemplo, so que usa r0 no lugar de r8
+                    new Sistema.Word[]{ // mesmo que prog exemplo, so que usa r0 no lugar de r8
                             new Sistema.Word(Sistema.Opcode.LDI, 1, -1, 0),
                             new Sistema.Word(Sistema.Opcode.STD, 1, -1, 20),
                             new Sistema.Word(Sistema.Opcode.LDI, 2, -1, 1),
@@ -146,7 +138,7 @@ public class Programs {
                             new Sistema.Word(Sistema.Opcode.DATA, -1, -1, -1) // ate aqui - serie de fibonacci ficara armazenada
                     }),
             new Program("fibonacciREAD",
-                    new Sistema.Word[] {
+                    new Sistema.Word[]{
                             // mesmo que prog exemplo, so que usa r0 no lugar de r8
                             new Sistema.Word(Sistema.Opcode.LDI, 8, -1, 1), // leitura
                             new Sistema.Word(Sistema.Opcode.LDI, 9, -1, 55), // endereco a guardar o tamanho da serie de fib a gerar
@@ -209,13 +201,13 @@ public class Programs {
                             new Sistema.Word(Sistema.Opcode.DATA, -1, -1, -1)
                     }),
             new Program("PB",
-                    new Sistema.Word[] {
+                    new Sistema.Word[]{
                             // dado um inteiro em alguma posição de memória,
                             // se for negativo armazena -1 na saída; se for positivo responde o fatorial do
                             // número na saída
                             new Sistema.Word(Sistema.Opcode.LDI, 0, -1, 7), // numero para colocar na memoria
-                            new Sistema.Word(Sistema.Opcode.STD, 0, -1, 50),
-                            new Sistema.Word(Sistema.Opcode.LDD, 0, -1, 50),
+                            new Sistema.Word(Sistema.Opcode.STD, 0, -1, 20),
+                            new Sistema.Word(Sistema.Opcode.LDD, 0, -1, 20),
                             new Sistema.Word(Sistema.Opcode.LDI, 1, -1, -1),
                             new Sistema.Word(Sistema.Opcode.LDI, 2, -1, 13), // SALVAR POS STOP
                             new Sistema.Word(Sistema.Opcode.JMPIL, 2, 0, -1), // caso negativo pula pro STD
@@ -228,10 +220,12 @@ public class Programs {
                             new Sistema.Word(Sistema.Opcode.JMP, -1, -1, 9), // pula para o JMPIE
                             new Sistema.Word(Sistema.Opcode.STD, 1, -1, 15),
                             new Sistema.Word(Sistema.Opcode.STOP, -1, -1, -1), // POS 14
-                            new Sistema.Word(Sistema.Opcode.DATA, -1, -1, -1) // POS 15
+                            new Sistema.Word(Sistema.Opcode.DATA, -1, -1, -1), // POS 15
+                            new Sistema.Word(Sistema.Opcode.___, -1, -1, -1), // POS 16
+                            new Sistema.Word(Sistema.Opcode.___, -1, -1, -1) // POS 17
                     }),
             new Program("PC",
-                    new Sistema.Word[] {
+                    new Sistema.Word[]{
                             // Para um N definido (10 por exemplo)
                             // o programa ordena um vetor de N números em alguma posição de memória;
                             // ordena usando bubble sort
@@ -296,4 +290,12 @@ public class Programs {
                             new Sistema.Word(Sistema.Opcode.DATA, -1, -1, -1)
                     })
     };
+
+    public Sistema.Word[] retrieveProgram(String pname) {
+        for (Program p : progs) {
+            if (p != null & p.name.equals(pname))
+                return p.image;
+        }
+        return null;
+    }
 }

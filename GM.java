@@ -44,7 +44,6 @@ public class GM implements GM_Interface {
         }
 
         if (encontrado < numPaginas) {
-            // Falha: desaloca já o que foi alocado
             for (int i = 0; i < encontrado; i++) {
                 frames[paginas[i]] = false;
             }
