@@ -690,7 +690,8 @@ public class Sistema {
 					hw.mem.pos[j].rb = -1;
 					hw.mem.pos[j].p = -1;
 				}
-		}
+		    }
+        }
 
 /*		private void loadAndExec(Word[] p) {
 			loadProgram(p, ); // carga do programa na memoria
@@ -703,7 +704,6 @@ public class Sistema {
 			dump(0, p.length); // dump da memoria com resultado
 		}*/
     }
-
     public class SO {
         public InterruptHandling ih;
         public SysCallHandling sc;
@@ -720,5 +720,4 @@ public class Sistema {
             utils = new Utilities(hw);
         }
     }
-
 }
