@@ -676,6 +676,22 @@ public class Sistema {
             }
         }
 
+		public void clearMemory(int allocatedPages[], int pageSize) {
+			for (int pageFrame : allocatedPages) {
+                if (pageFrame < 0 || pageFrame >= (hw.mem.pos.length / pageSize)) {
+                    throw new IllegalArgumentException("Invalid page frame: " + pageFrame);
+                }
+				int physicalStart = pageFrame * pageSize;
+				int physicalEnd = physicalStart + pageSize;
+
+				for (int j = physicalStart; j < physicalEnd; j++) {
+					hw.mem.pos[j].opc = Opcode.___;
+					hw.mem.pos[j].ra = -1;
+					hw.mem.pos[j].rb = -1;
+					hw.mem.pos[j].p = -1;
+				}
+		}
+
 /*		private void loadAndExec(Word[] p) {
 			loadProgram(p, ); // carga do programa na memoria
 			System.out.println("---------------------------------- programa carregado na memoria");
