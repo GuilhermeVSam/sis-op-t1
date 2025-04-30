@@ -35,6 +35,10 @@ public class UserInterface {
                     System.out.println(sistema.so.gp.listProcess());
                 }
                 case "dump" -> {
+                    if (command.length < 2) {
+                        System.err.println("Error: ID not provided. Usage: dump <id>");
+                        break;
+                    }
                     int id = Integer.parseInt(command[1]);
                     sistema.so.gp.dumpID(id);
                 }
@@ -42,6 +46,7 @@ public class UserInterface {
                     String[] inicioFim = command[1].split(",");
                     int inicio = Integer.parseInt(inicioFim[0]);
                     int fim = Integer.parseInt(inicioFim[1]);
+                    sistema.so.utils.dump(inicio, fim);
                 }
                 case "exec" -> {
                     if (command.length > 1) {

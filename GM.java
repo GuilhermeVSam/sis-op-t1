@@ -66,6 +66,15 @@ public class GM implements GM_Interface {
         for (int pagina : paginas) {
             frames[pagina] = false;
         }
+        // Remove as entradas da tabela de páginas
+        for (Map<Integer, Integer> tabela : tabelasDePaginas.values()) {
+            for (Integer paginaLogica : tabela.keySet()) {
+                if (tabela.get(paginaLogica) == paginas[0]) { // Verifica se o frame está na tabela de páginas
+                    tabela.remove(paginaLogica);
+                    break;
+                }
+            }
+        }
     }
 
     public int traduzir(int idProcesso, int enderecoLogico) {

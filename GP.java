@@ -98,12 +98,18 @@ public class GP implements GP_Interface {
         for (PCB process : rodando) {
             if (process.processID == id) {
                 rodando.remove(process);
+                gm.desaloca(process.memPage);
+                so.utils.clearMemory(process.memPage, gm.getTamPg());
+                processID[id] = false;
                 return;
             }
         }
         for (PCB process : prontos) {
             if (process.processID == id) {
                 prontos.remove(process);
+                gm.desaloca(process.memPage);
+                so.utils.clearMemory(process.memPage, gm.getTamPg());
+                processID[id] = false;
                 return;
             }
         }
