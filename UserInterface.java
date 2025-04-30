@@ -70,6 +70,10 @@ public class UserInterface {
                     case "traceOff" -> {
                         //traceOff()
                     }
+                    case "fill" -> {
+                        int id = Integer.parseInt(command[1]);
+                        sistema.so.gm.fill(id);
+                    }
                     case "exit" -> {
                         return;
                     }

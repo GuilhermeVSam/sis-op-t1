@@ -52,6 +52,10 @@ public class GM {
         return paginas;
     }
 
+    public void fill(int x){
+        frames[x] = true;
+    }
+
     public void registerPageTable(int idProcesso, int[] paginas) {
         Map<Integer, Integer> tabela = new HashMap<>();
         for (int paginaLogica = 0; paginaLogica < paginas.length; paginaLogica++) {

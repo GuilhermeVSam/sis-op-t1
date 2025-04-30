@@ -1,10 +1,13 @@
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.Queue;
+import java.util.List;
 
 public class GP {
     GM gm;
     Sistema.SO so;
     boolean[] processID;
+    List<PCB> programs;
     Queue<PCB> running;
     Queue<PCB> ready;
 
@@ -15,6 +18,7 @@ public class GP {
         processID = new boolean[maxProc];
         running = new LinkedList<>();
         ready = new LinkedList<>();
+        programs = new ArrayList<>();
     }
 
     public int createProcess(String programName, Sistema.Word[] programa) {
@@ -32,6 +36,7 @@ public class GP {
         int inicio = gm.translate(processID, 0);
         PCB processControlBlock = new PCB(programName, processID, inicio, new int[10], paginasMemoria);
         ready.add(processControlBlock);
+        programs.add(processControlBlock);
 
         return processControlBlock.processID;
     }
@@ -110,6 +115,15 @@ public class GP {
                 return;
             }
         }
+        for (PCB process : programs){
+            if(process.processID == id){
+                programs.remove(process);
+                gm.deallocate(process.memPage);
+                so.utils.clearMemory(process.memPage, gm.getPageSize());
+                processID[id] = false;
+                return;
+            }
+        }
     }
 
     public String listProcess(){
@@ -137,7 +151,7 @@ public class GP {
         for (PCB process : running) {
             if (process.processID == id) {
                 int inicio = gm.translate(id, 0);
-                int fim = inicio + (process.memPage.length * gm.getPageSize()) - 1;
+                int fim = gm.translate(id, inicio + (process.memPage.length * gm.getPageSize()) - 1);
                 System.out.println(process);
                 System.out.println("Dumping memory from " + inicio + " to " + fim);
                 so.utils.dump(inicio, fim);
@@ -148,7 +162,8 @@ public class GP {
         for (PCB process : ready) {
             if (process.processID == id) {
                 int inicio = gm.translate(id, 0);
-                int fim = inicio + (process.memPage.length * gm.getPageSize()) - 1;
+                int fim = gm.translate(id, process.memPage.length * gm.getPageSize() - 1);
+                System.out.println("Dumping memory from " + inicio + " to " + fim);
                 System.out.println(process);
                 so.utils.dump(inicio, fim);
                 return;
