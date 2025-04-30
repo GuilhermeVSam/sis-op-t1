@@ -9,27 +9,43 @@ public class Scheduler {
         this.contadorInstrucoes = 0;
     }
 
+    public void exec(int id){
+        if(sistema.so.gp.processID[id]){
+            processoAtual = sistema.so.gp.load(id);
+            restoreContext(processoAtual);
+            while (processoAtual != null) {
+                execOnce(processoAtual);
+                contadorInstrucoes++;
+                if (contadorInstrucoes >= DELTA) {
+                    interruptTreat();
+                }
+            }
+        } else {
+            System.out.println("Processo não encontrado.");
+        }
+    }
+
     public void execAll() {
-        while (!sistema.so.gp.prontos.isEmpty() || processoAtual != null) {
+        while (!sistema.so.gp.ready.isEmpty() || processoAtual != null) {
             if (processoAtual == null) {
                 processoAtual = sistema.so.gp.loadNext();
                 if (processoAtual == null) {
                     break;
                 }
-                restaurarContexto(processoAtual);
+                restoreContext(processoAtual);
             }
 
-            executarUmaInstrucao(processoAtual);
+            execOnce(processoAtual);
 
             contadorInstrucoes++;
 
             if (contadorInstrucoes >= DELTA) {
-                tratadorInterrupcao();
+                interruptTreat();
             }
         }
     }
 
-    private void executarUmaInstrucao(PCB processo) {
+    private void execOnce(PCB processo) {
         if (sistema.hw.cpu.getPC() == -1) {
             return;
         }
@@ -41,7 +57,7 @@ public class Scheduler {
         if (sistema.hw.cpu.isCpuStop()) {
             System.out.println("Processo " + processo.processID + " terminou.");
             try {
-                sistema.so.gp.desalocaProcesso(processo.processID);
+                sistema.so.gp.removeProcess(processo.processID);
             } catch (IllegalStateException e) {
                 System.out.println("Processo já foi desalocado.");
             }
@@ -50,18 +66,18 @@ public class Scheduler {
 
     }
 
-    private void tratadorInterrupcao() {
+    private void interruptTreat() {
         try {
             System.out.println("Interrupção: salvando contexto do processo " + processoAtual.processID);
 
-            salvarContexto(processoAtual);
+            saveContext(processoAtual);
 
             sistema.so.gp.unload(processoAtual.processID);
 
             processoAtual = sistema.so.gp.loadNext();
 
             if (processoAtual != null) {
-                restaurarContexto(processoAtual);
+                restoreContext(processoAtual);
             }
 
             contadorInstrucoes = 0;
@@ -69,12 +85,12 @@ public class Scheduler {
         }
     }
 
-    private void salvarContexto(PCB processo) {
+    private void saveContext(PCB processo) {
         processo.programCounter = sistema.hw.cpu.getPC();
         processo.registers = sistema.hw.cpu.getRegisters().clone();
     }
 
-    private void restaurarContexto(PCB processo) {
+    private void restoreContext(PCB processo) {
         sistema.hw.cpu.setContext(processo.programCounter);
         sistema.hw.cpu.setRegisters(processo.registers.clone());
     }

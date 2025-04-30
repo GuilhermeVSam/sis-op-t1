@@ -1,19 +1,19 @@
 import java.util.HashMap;
 import java.util.Map;
 
-public class GM implements GM_Interface {
+public class GM {
     private static GM instance;
 
     private boolean[] frames;
-    private int tamPg;
-    private int tamMem;
-    private Map<Integer, Map<Integer, Integer>> tabelasDePaginas; // processo -> (pagina logica -> frame fisico)
+    private int pageSize;
+    private int memSize;
+    private Map<Integer, Map<Integer, Integer>> pageTable; // processo -> (pagina logica -> frame fisico)
 
     private GM(int tamMem, int tamPg) {
-        this.tamMem = tamMem;
-        this.tamPg = tamPg;
+        this.memSize = tamMem;
+        this.pageSize = tamPg;
         this.frames = new boolean[tamMem / tamPg];
-        this.tabelasDePaginas = new HashMap<>();
+        this.pageTable = new HashMap<>();
     }
 
     public static GM getInstance(int tamMem, int tamPg) {
@@ -30,9 +30,8 @@ public class GM implements GM_Interface {
         return instance;
     }
 
-    @Override
-    public int[] aloca(int tamProcesso) {
-        int numPaginas = (int) Math.ceil((double) tamProcesso / tamPg);
+    public int[] malloc(int tamProcesso) {
+        int numPaginas = (int) Math.ceil((double) tamProcesso / pageSize);
         int[] paginas = new int[numPaginas];
         int encontrado = 0;
 
@@ -53,21 +52,20 @@ public class GM implements GM_Interface {
         return paginas;
     }
 
-    public void registraTabelaPaginas(int idProcesso, int[] paginas) {
+    public void registerPageTable(int idProcesso, int[] paginas) {
         Map<Integer, Integer> tabela = new HashMap<>();
         for (int paginaLogica = 0; paginaLogica < paginas.length; paginaLogica++) {
             tabela.put(paginaLogica, paginas[paginaLogica]);
         }
-        tabelasDePaginas.put(idProcesso, tabela);
+        pageTable.put(idProcesso, tabela);
     }
 
-    @Override
-    public void desaloca(int[] paginas) {
+    public void deallocate(int[] paginas) {
         for (int pagina : paginas) {
             frames[pagina] = false;
         }
         // Remove as entradas da tabela de páginas
-        for (Map<Integer, Integer> tabela : tabelasDePaginas.values()) {
+        for (Map<Integer, Integer> tabela : pageTable.values()) {
             for (Integer paginaLogica : tabela.keySet()) {
                 if (tabela.get(paginaLogica) == paginas[0]) { // Verifica se o frame está na tabela de páginas
                     tabela.remove(paginaLogica);
@@ -77,24 +75,24 @@ public class GM implements GM_Interface {
         }
     }
 
-    public int traduzir(int idProcesso, int enderecoLogico) {
-        int paginaLogica = enderecoLogico / tamPg;
-        int deslocamento = enderecoLogico % tamPg;
+    public int translate(int idProcesso, int enderecoLogico) {
+        int paginaLogica = enderecoLogico / pageSize;
+        int deslocamento = enderecoLogico % pageSize;
 
-        Map<Integer, Integer> tabela = tabelasDePaginas.get(idProcesso);
+        Map<Integer, Integer> tabela = pageTable.get(idProcesso);
         if (tabela == null || !tabela.containsKey(paginaLogica)) {
             throw new IllegalStateException("Endereço inválido ou processo não encontrado.");
         }
 
         int frameFisico = tabela.get(paginaLogica);
-        return frameFisico * tamPg + deslocamento;
+        return frameFisico * pageSize + deslocamento;
     }
 
-    public int getTamPg() {
-        return tamPg;
+    public int getPageSize() {
+        return pageSize;
     }
 
-    public int getTamMem() {
-        return tamMem;
+    public int getMemSize() {
+        return memSize;
     }
 }

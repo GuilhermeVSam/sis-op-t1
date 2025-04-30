@@ -21,7 +21,6 @@
 //           em seguida solicita a execução de algum programa com  loadAndExec
 
 import java.util.Arrays;
-import java.util.Scanner;
 
 public class Sistema {
 
@@ -48,64 +47,10 @@ public class Sistema {
         progs = new Programs();
     }
 
-    public static void main(String args[]) {
-        Sistema s = new Sistema(1024, 16);
-    }
     // ------------------ C P U - fim
     // -----------------------------------------------------------------------
     // ------------------------------------------------------------------------------------------------------
 
-//    public void run() {
-//        Scheduler scheduler = new Scheduler(this);
-//
-//        // Primeiro: cria dois processos iniciais
-//        Word[] simpleProg1 = createSimpleProgram();
-//        Word[] simpleProg2 = createSimpleProgram();
-//
-//        int id1 = so.gp.criaProcesso(simpleProg1);
-//        System.out.println("Processo " + id1 + " criado.");
-//
-//        int id2 = so.gp.criaProcesso(simpleProg2);
-//        System.out.println("Processo " + id2 + " criado.");
-//
-//        // Cria a thread que executa os processos
-//        Thread schedulerThread = new Thread(() -> {
-//            while (true) {
-//                if (!so.gp.prontos.isEmpty()) {  // verifica se há processos prontos
-//                    scheduler.execAll();         // só executa se houver processo
-//                }
-//                try {
-//                    Thread.sleep(100);            // descanso de 100ms
-//                } catch (InterruptedException e) {
-//                    break; // se a thread for interrompida, para
-//                }
-//            }
-//        });
-//
-//        schedulerThread.start();
-//
-//        // Loop de comandos do usuário
-//        Scanner scanner = new Scanner(System.in);
-//
-//        while (true) {
-//            System.out.println("Digite um comando (load / exit): ");
-//            String comando = scanner.nextLine();
-//
-//            if (comando.equalsIgnoreCase("load")) {
-//                Word[] novoProg = createSimpleProgram();
-//                int id = so.gp.criaProcesso(novoProg);
-//                System.out.println("Novo processo " + id + " criado e colocado na fila de prontos.");
-//            } else if (comando.equalsIgnoreCase("exit")) {
-//                System.out.println("Encerrando sistema...");
-//                schedulerThread.interrupt();
-//                break;
-//            } else {
-//                System.out.println("Comando inválido!");
-//            }
-//        }
-//
-//        scanner.close();
-//    }
     // -------------------------------------------------------------------------------------------------------
 
     // --------------------H A R D W A R E - fim
@@ -285,7 +230,7 @@ public class Sistema {
                         pc++;
                         break;
                     case LDD: // Rd <- [A]
-                        addrLDD = gm.traduzir(pid, ir.p); // traduzir endereco logico
+                        addrLDD = gm.translate(pid, ir.p); // traduzir endereco logico
                         if (legal(addrLDD)) {
                             reg[ir.ra] = m[addrLDD].p;
                             pc++;
@@ -293,13 +238,13 @@ public class Sistema {
                         break;
                     case LDX: // RD <- [RS] // NOVA
                         if (legal(reg[ir.rb])) {
-                            int memAddr = gm.traduzir(pid, reg[ir.rb]); // traduzir endereco logico
+                            int memAddr = gm.translate(pid, reg[ir.rb]); // traduzir endereco logico
                             reg[ir.ra] = m[memAddr].p;
                             pc++;
                         }
                         break;
                     case STD:
-                        addrSTD = gm.traduzir(pid, ir.p);
+                        addrSTD = gm.translate(pid, ir.p);
                         if (legal(addrSTD)) {
                             m[addrSTD].opc = Opcode.DATA;
                             m[addrSTD].p = reg[ir.ra];
@@ -351,16 +296,16 @@ public class Sistema {
 
                     // Instrucoes JUMP
                     case JMP: // PC <- k
-                        addrJMP = gm.traduzir(pid, ir.p);
+                        addrJMP = gm.translate(pid, ir.p);
                         pc = addrJMP;
                         break;
                     case JMPIM: // PC <- [A]
-                        addrJMP = gm.traduzir(pid, ir.p);
+                        addrJMP = gm.translate(pid, ir.p);
                         pc = m[addrJMP].p;
                         break;
                     case JMPIG: // If Rc > 0 Then PC ← Rs Else PC ← PC +1
                         if (reg[ir.rb] > 0) {
-                            addrJMP = gm.traduzir(pid, ir.ra);
+                            addrJMP = gm.translate(pid, ir.ra);
                             pc = addrJMP;
                         } else {
                             pc++;
@@ -368,7 +313,7 @@ public class Sistema {
                         break;
                     case JMPIGK: // If RC > 0 then PC <- k else PC++
                         if (reg[ir.rb] > 0) {
-                            addrJMP = gm.traduzir(pid, ir.p);
+                            addrJMP = gm.translate(pid, ir.p);
                             pc = addrJMP;
                         } else {
                             pc++;
@@ -376,7 +321,7 @@ public class Sistema {
                         break;
                     case JMPILK: // If RC < 0 then PC <- k else PC++
                         if (reg[ir.rb] < 0) {
-                            addrJMP = gm.traduzir(pid, ir.p);
+                            addrJMP = gm.translate(pid, ir.p);
                             pc = addrJMP;
                         } else {
                             pc++;
@@ -384,7 +329,7 @@ public class Sistema {
                         break;
                     case JMPIEK: // If RC = 0 then PC <- k else PC++
                         if (reg[ir.rb] == 0) {
-                            addrJMP = gm.traduzir(pid, ir.p);
+                            addrJMP = gm.translate(pid, ir.p);
                             pc = addrJMP;
                         } else {
                             pc++;
@@ -392,7 +337,7 @@ public class Sistema {
                         break;
                     case JMPIL: // if Rc < 0 then PC <- Rs Else PC <- PC +1
                         if (reg[ir.rb] < 0) {
-                            addrJMP = gm.traduzir(pid, reg[ir.ra]);
+                            addrJMP = gm.translate(pid, reg[ir.ra]);
                             pc = addrJMP;
                         } else {
                             pc++;
@@ -400,14 +345,14 @@ public class Sistema {
                         break;
                     case JMPIE: // If Rc = 0 Then PC <- Rs Else PC <- PC +1
                         if (reg[ir.rb] == 0) {
-                            addrJMP = gm.traduzir(pid, reg[ir.ra]);
+                            addrJMP = gm.translate(pid, reg[ir.ra]);
                             pc = addrJMP;
                         } else {
                             pc++;
                         }
                         break;
                     case JMPIGM: // If RC > 0 then PC <- [A] else PC++
-                        addrJMP = gm.traduzir(pid, ir.p);
+                        addrJMP = gm.translate(pid, ir.p);
                         if (legal(addrJMP)) {
                             if (reg[ir.rb] > 0) {
                                 pc = addrJMP;
@@ -418,7 +363,7 @@ public class Sistema {
                         break;
                     case JMPILM: // If RC < 0 then PC <- k else PC++
                         if (reg[ir.rb] < 0) {
-                            addrJMP = gm.traduzir(pid, ir.p);
+                            addrJMP = gm.translate(pid, ir.p);
                             pc = addrJMP;
                         } else {
                             pc++;
@@ -426,7 +371,7 @@ public class Sistema {
                         break;
                     case JMPIEM: // If RC = 0 then PC <- k else PC++
                         if (reg[ir.rb] == 0) {
-                            addrJMP = gm.traduzir(pid, ir.p);
+                            addrJMP = gm.translate(pid, ir.p);
                             pc = addrJMP;
                         } else {
                             pc++;
@@ -434,7 +379,7 @@ public class Sistema {
                         break;
                     case JMPIGT: // If RS>RC then PC <- k else PC++
                         if (reg[ir.ra] > reg[ir.rb]) {
-                            addrJMP = gm.traduzir(pid, ir.p);
+                            addrJMP = gm.translate(pid, ir.p);
                             pc = addrJMP;
                         } else {
                             pc++;
@@ -600,60 +545,6 @@ public class Sistema {
             }
         }
 
-        // Helper methods
-        private boolean isInstruction(Opcode opc) {
-            return opc != Opcode.DATA && opc != Opcode.___;
-        }
-
-        public void execProgram(PCB pcb, int[] posMemoria, int tamPagina) {
-            System.out.println("---------------------------------- programa carregado na memoria");
-            dump(posMemoria[0] * tamPagina, (posMemoria[posMemoria.length - 1] + 1) * tamPagina);
-
-            // Define o contexto inicial (primeira página)
-            int paginaAtual = 0;
-            int programCounter = posMemoria[paginaAtual] * tamPagina;
-            hw.cpu.setContext(programCounter);
-
-            // Loop principal de execução
-            while (true) {
-                // Verifica se o pc está dentro da página atual
-                if (hw.cpu.pc == -1) break;
-                int paginaDoPc = hw.cpu.pc / tamPagina;
-                boolean paginaValida = false;
-
-                // Verifica se o pc está em alguma das páginas alocadas
-                for (int pagina : posMemoria) {
-                    if (pagina == paginaDoPc) {
-                        paginaValida = true;
-                        break;
-                    }
-                }
-
-                // Se o pc saiu das páginas alocadas, termina a execução
-                if (!paginaValida) {
-                    System.out.println("Execution stopped: PC left allocated memory area.");
-                    break;
-                }
-
-                // Se atingiu um DATA ou área não executável, para
-                if (hw.mem.pos[hw.cpu.pc].opc == Opcode.DATA || hw.mem.pos[hw.cpu.pc].opc == Opcode.___) {
-                    System.out.println("Execution stopped: Attempted to execute non-instruction area.");
-                    break;
-                }
-
-                // Se encontrou um STOP, termina
-                if (hw.mem.pos[hw.cpu.pc].opc == Opcode.STOP) {
-                    System.out.println("Execution stopped: STOP instruction encountered.");
-                    break;
-                }
-                // Executa UMA instrução (a CPU atualiza o pc internamente)
-                hw.cpu.run(pcb.processID, gm);
-            }
-
-            System.out.println("---------------------------------- memoria após execucao ");
-            dump(posMemoria[0] * tamPagina, (posMemoria[posMemoria.length - 1] + 1) * tamPagina);
-        }
-
         // dump da memória
         public void dump(Word w) { // funcoes de DUMP nao existem em hardware - colocadas aqui para facilidade
             System.out.print("[ ");
@@ -692,17 +583,6 @@ public class Sistema {
 				}
 		    }
         }
-
-/*		private void loadAndExec(Word[] p) {
-			loadProgram(p, ); // carga do programa na memoria
-			System.out.println("---------------------------------- programa carregado na memoria");
-			dump(0, p.length); // dump da memoria nestas posicoes
-			hw.cpu.setContext(0); // seta pc para endereço 0 - ponto de entrada dos programas
-			System.out.println("---------------------------------- inicia execucao ");
-			hw.cpu.run(); // cpu roda programa ate parar
-			System.out.println("---------------------------------- memoria após execucao ");
-			dump(0, p.length); // dump da memoria com resultado
-		}*/
     }
     public class SO {
         public InterruptHandling ih;

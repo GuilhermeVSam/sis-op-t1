@@ -6,68 +6,85 @@ public class UserInterface {
         Sistema sistema = new Sistema(1024, 8);
         Programs programs = new Programs();
         Scheduler scheduler = new Scheduler(sistema);
-
-        while (true) {
-            String input = sc.nextLine();
-            String[] command = input.split(" ");
-            switch (command[0]) {
-                case "new" -> {
-                    try {
-                        if (command.length == 2) {
-                            String programName = command[1];
-                            Sistema.Word[] programa = programs.retrieveProgram(programName);
-                            System.out.println(programa.length);
-                            int procId = sistema.so.gp.criaProcesso(programName, programa);
-                            System.out.println("Program " + programName + " created");
-                            System.out.println(procId);
-                        } else {
-                            throw new IndexOutOfBoundsException();
+        try{
+            while (true) {
+                String input = sc.nextLine();
+                String[] command = input.split(" ");
+                switch (command[0]) {
+                    case "new" -> {
+                        try {
+                            if (command.length == 2) {
+                                String programName = command[1];
+                                Sistema.Word[] programa = programs.retrieveProgram(programName);
+                                System.out.println(programa.length);
+                                int procId = sistema.so.gp.createProcess(programName, programa);
+                                System.out.println("Program " + programName + " created");
+                                System.out.println(procId);
+                            } else {
+                                throw new IndexOutOfBoundsException();
+                            }
+                        } catch (IndexOutOfBoundsException ex) {
+                            System.err.println("Command Malformed: Try 'new <programName>'");
+                        } catch (NullPointerException ex) {
+                            System.err.println("Program not found");
+                        } catch (Exception ex) {
+                            System.err.println("Error: " + ex.getMessage());
                         }
-                    } catch (IndexOutOfBoundsException ex) {
-                        System.err.println("Command Malformed: Try 'new <programName>'");
                     }
-                }
-                case "rm" -> {
-                    int id = Integer.parseInt(command[1]);
-                    sistema.so.gp.kill(id);
-                }
-                case "ps" -> {
-                    System.out.println(sistema.so.gp.listProcess());
-                }
-                case "dump" -> {
-                    if (command.length < 2) {
-                        System.err.println("Error: ID not provided. Usage: dump <id>");
-                        break;
-                    }
-                    int id = Integer.parseInt(command[1]);
-                    sistema.so.gp.dumpID(id);
-                }
-                case "dumpM" -> {
-                    String[] inicioFim = command[1].split(",");
-                    int inicio = Integer.parseInt(inicioFim[0]);
-                    int fim = Integer.parseInt(inicioFim[1]);
-                    sistema.so.utils.dump(inicio, fim);
-                }
-                case "exec" -> {
-                    if (command.length > 1) {
+                    case "rm" -> {
                         int id = Integer.parseInt(command[1]);
-                    } else {
-                        scheduler.execAll();
+                        sistema.so.gp.kill(id);
                     }
-                }
-                case "traceOn" -> {
-                    //traceOn()
-                }
-                case "traceOff" -> {
-                    //traceOff()
-                }
-                case "exit" -> {
-                    return;
-                }
-                default -> {
-                    System.err.println("Command not Found");
+                    case "ps" -> System.out.println(sistema.so.gp.listProcess());
+                    case "dump" -> {
+                        if (command.length < 2) {
+                            System.err.println("Error: ID not provided. Usage: dump <id>");
+                            break;
+                        }
+                        int id = Integer.parseInt(command[1]);
+                        sistema.so.gp.dumpID(id);
+                    }
+                    case "dumpM" -> {
+                        String[] startFinish = command[1].split(",");
+                        int start = Integer.parseInt(startFinish[0]);
+                        int finish = Integer.parseInt(startFinish[1]);
+                        sistema.so.utils.dump(start, finish);
+                    }
+                    case "exec" -> {
+                        if (command.length > 1) {
+                            int id = Integer.parseInt(command[1]);
+                            scheduler.exec(id);
+                        } else {
+                            scheduler.execAll();
+                        }
+                    }
+                    case "traceOn" -> {
+                        //traceOn()
+                    }
+                    case "traceOff" -> {
+                        //traceOff()
+                    }
+                    case "exit" -> {
+                        return;
+                    }
+                    case "help" -> {
+                        System.out.println("Available commands:");
+                        System.out.println("new <programName> - Create a new process with the specified program");
+                        System.out.println("rm <id> - Remove a process with the specified ID");
+                        System.out.println("ps - List all processes");
+                        System.out.println("dump <id> - Dump memory of the process with the specified ID");
+                        System.out.println("dumpM <start,end> - Dump memory from start to end");
+                        System.out.println("exec - Execute all processes");
+                        System.out.println("exec <id> - Execute a specific process or all processes if no ID is provided");
+                        System.out.println("traceOn - Enable tracing");
+                        System.out.println("traceOff - Disable tracing");
+                        System.out.println("exit - Exit the program");
+                    }
+                    default -> System.err.println("Command not Found");
                 }
             }
+        } catch (Exception e) {
+            System.out.println("Command Malformed");
         }
     }
 }
