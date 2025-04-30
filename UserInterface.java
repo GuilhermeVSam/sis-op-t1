@@ -37,12 +37,18 @@ public class UserInterface {
                     }
                     case "ps" -> System.out.println(sistema.so.gp.listProcess());
                     case "dump" -> {
-                        if (command.length < 2) {
-                            System.err.println("Error: ID not provided. Usage: dump <id>");
-                            break;
+                        try{
+                            if (command.length < 2) {
+                                System.err.println("Error: ID not provided. Usage: dump <id>");
+                                break;
+                            }
+                            int id = Integer.parseInt(command[1]);
+                            sistema.so.gp.dumpID(id);
+                        } catch (NumberFormatException e) {
+                            System.err.println("Error: Invalid ID format. Usage: dump <id>");
+                        } catch (Exception e) {
+                            System.err.println("Error: " + e.getMessage());
                         }
-                        int id = Integer.parseInt(command[1]);
-                        sistema.so.gp.dumpID(id);
                     }
                     case "dumpM" -> {
                         String[] startFinish = command[1].split(",");
