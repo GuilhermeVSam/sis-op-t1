@@ -64,12 +64,8 @@ public class UserInterface {
                             scheduler.execAll();
                         }
                     }
-                    case "traceOn" -> {
-                        //traceOn()
-                    }
-                    case "traceOff" -> {
-                        //traceOff()
-                    }
+                    case "traceOn" -> sistema.hw.cpu.setDebug(true);
+                    case "traceOff" -> sistema.hw.cpu.setDebug(false);
                     case "fill" -> {
                         int id = Integer.parseInt(command[1]);
                         sistema.so.gm.fill(id);

@@ -166,6 +166,10 @@ public class Sistema {
             u = _u;                     // aponta para rotinas utilitárias - fazer dump da memória na tela
         }
 
+        public void setDebug(boolean _debug) {
+            debug = _debug;            // se true, print da instrucao em execucao
+        }
+
         // verificação de enderecamento
         private boolean legal(int e) { // todo acesso a memoria tem que ser verificado se é válido -
             // aqui no caso se o endereco é um endereco valido em toda memoria
