@@ -1,3 +1,7 @@
+package Sistema.SistemaOperacional;
+
+import Sistema.Hardware.Word;
+
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.Queue;
@@ -5,13 +9,13 @@ import java.util.List;
 
 public class GP {
     GM gm;
-    Sistema.SO so;
-    boolean[] processID;
+    SO so;
+    public boolean[] processID;
     List<PCB> programs;
     Queue<PCB> running;
-    Queue<PCB> ready;
+    public Queue<PCB> ready;
 
-    public GP(GM gm, Sistema.SO so) {
+    public GP(GM gm, SO so) {
         this.gm = gm;
         this.so = so;
         int maxProc = gm.getMemSize() / gm.getPageSize();
@@ -21,7 +25,7 @@ public class GP {
         programs = new ArrayList<>();
     }
 
-    public int createProcess(String programName, Sistema.Word[] programa) {
+    public int createProcess(String programName, Word[] programa) {
         int tamanhoPrograma = programa.length;
         int[] paginasMemoria = gm.malloc(tamanhoPrograma);
         if (paginasMemoria == null) {

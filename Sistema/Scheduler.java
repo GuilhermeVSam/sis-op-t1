@@ -1,3 +1,7 @@
+package Sistema;
+
+import Sistema.SistemaOperacional.PCB;
+
 public class Scheduler extends Thread {
     private final int DELTA = 5; // número de instruções por time slice
     private Sistema sistema;

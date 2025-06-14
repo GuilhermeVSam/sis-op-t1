@@ -1,9 +1,11 @@
+package Sistema.SistemaOperacional;
+
 public class PCB {
     String programName;
-    int processID;
+    public int processID;
     int parentProcessID;
-    int programCounter;
-    int[] registers;
+    public int programCounter;
+    public int[] registers;
     int[] memPage;
     ProcessState processState;
     public PCB(String programName, int processID, int programCounter, int[] registers, int[] memPage) {

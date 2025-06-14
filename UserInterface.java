@@ -1,4 +1,9 @@
+import Sistema.Hardware.Word;
+import Sistema.SistemaOperacional.Programs;
+
 import java.util.Scanner;
+import Sistema.Sistema;
+import Sistema.Scheduler;
 
 public class UserInterface {
     public static void main(String[] args) {
@@ -15,10 +20,10 @@ public class UserInterface {
                         try {
                             if (command.length == 2) {
                                 String programName = command[1];
-                                Sistema.Word[] programa = programs.retrieveProgram(programName);
+                                Word[] programa = programs.retrieveProgram(programName);
                                 System.out.println(programa.length);
                                 int procId = sistema.so.gp.createProcess(programName, programa);
-                                System.out.println("Program " + programName + " created");
+                                System.out.println("Sistema.SistemaOperacional.Program " + programName + " created");
                                 System.out.println(procId);
                             } else {
                                 throw new IndexOutOfBoundsException();
@@ -26,7 +31,7 @@ public class UserInterface {
                         } catch (IndexOutOfBoundsException ex) {
                             System.err.println("Command Malformed: Try 'new <programName>'");
                         } catch (NullPointerException ex) {
-                            System.err.println("Program not found");
+                            System.err.println("Sistema.SistemaOperacional.Program not found");
                         } catch (Exception ex) {
                             System.err.println("Error: " + ex.getMessage());
                         }
