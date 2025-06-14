@@ -1,4 +1,8 @@
-public class Scheduler {
+package Sistema;
+
+import Sistema.SistemaOperacional.PCB;
+
+public class Scheduler extends Thread {
     private final int DELTA = 5; // número de instruções por time slice
     private Sistema sistema;
     private PCB processoAtual;
@@ -25,7 +29,7 @@ public class Scheduler {
         }
     }
 
-    public void execAll() {
+    public void run() {
         while (!sistema.so.gp.ready.isEmpty() || processoAtual != null) {
             if (processoAtual == null) {
                 processoAtual = sistema.so.gp.loadNext();
@@ -36,6 +40,15 @@ public class Scheduler {
             }
 
             execOnce(processoAtual);
+
+            try {
+                // Aguarda 5000 milissegundos (5 segundos)
+                Thread.sleep(2000);
+            } catch (InterruptedException e) {
+                // Trata a exceção caso a thread seja interrompida
+                Thread.currentThread().interrupt(); // restaura o status de interrupção
+                System.err.println("Thread interrompida durante o sleep");
+            }
 
             contadorInstrucoes++;
 
