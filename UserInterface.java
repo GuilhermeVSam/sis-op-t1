@@ -61,7 +61,7 @@ public class UserInterface {
                             int id = Integer.parseInt(command[1]);
                             scheduler.exec(id);
                         } else {
-                            scheduler.execAll();
+                            scheduler.start();
                         }
                     }
                     case "traceOn" -> sistema.hw.cpu.setDebug(true);
