@@ -1,5 +1,5 @@
 package Sistema.Hardware;
 
 public enum Interrupts {           // possiveis interrupcoes que esta CPU gera
-    noInterrupt, intEnderecoInvalido, intInstrucaoInvalida, intOverflow, intSTOP, NONE;
+    noInterrupt, intEnderecoInvalido, intInstrucaoInvalida, intOverflow, intSTOP, NONE, intIO;
 }

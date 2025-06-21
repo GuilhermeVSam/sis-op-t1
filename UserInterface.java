@@ -3,14 +3,15 @@ import Sistema.SistemaOperacional.Programs;
 
 import java.util.Scanner;
 import Sistema.Sistema;
-import Sistema.Scheduler;
+import Sistema.Gerenciadores.Scheduler;
 
 public class UserInterface {
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
         Sistema sistema = new Sistema(1024, 8);
-        Programs programs = new Programs();
         Scheduler scheduler = new Scheduler(sistema);
+        scheduler.start();
+        Programs programs = new Programs();
         try{
             while (true) {
                 String input = sc.nextLine();
@@ -64,9 +65,8 @@ public class UserInterface {
                     case "exec" -> {
                         if (command.length > 1) {
                             int id = Integer.parseInt(command[1]);
-                            scheduler.exec(id);
+                            //scheduler.exec(id);
                         } else {
-                            scheduler.start();
                         }
                     }
                     case "traceOn" -> sistema.hw.cpu.setDebug(true);

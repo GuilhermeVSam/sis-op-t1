@@ -6,8 +6,8 @@ public class HW {
     public Memory mem;
     public CPU cpu;
 
-    public HW(int tamMem) {
-        mem = new Memory(tamMem);
-        cpu = new CPU(mem, true); // true liga debug
+    public HW(Memory mem, CPU cpu) {
+        this.mem = mem;
+        this.cpu = cpu;
     }
 }

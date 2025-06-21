@@ -1,21 +1,20 @@
 package Sistema.Hardware;
 
 
-import Sistema.SistemaOperacional.GM;
-import Sistema.SistemaOperacional.InterruptHandling;
-import Sistema.SistemaOperacional.SysCallHandling;
-import Sistema.SistemaOperacional.Utilities;
+import Sistema.Sistema;
+import Sistema.SistemaOperacional.*;
 
 import java.util.Arrays;
+import java.util.concurrent.Semaphore;
 
-public class CPU {
+public class CPU extends Thread {
     private int maxInt; // valores maximo e minimo para inteiros nesta cpu
     private int minInt;
     // CONTEXTO da CPU ...
     public int pc;     // ... composto de program counter,
     private Word ir;    // instruction register,
     public int[] reg;  // registradores da CPU
-    private Interrupts irpt; // durante instrucao, interrupcao pode ser sinalizada
+    public Interrupts irpt; // durante instrucao, interrupcao pode ser sinalizada
     // FIM CONTEXTO DA CPU: tudo que precisa sobre o estado de um processo para
     // executa-lo
     // nas proximas versoes isto pode modificar
@@ -31,6 +30,11 @@ public class CPU {
     // auxilio aa depuração
     private boolean debug;      // se true entao mostra cada instrucao em execucao
     private Utilities u;        // para debug (dump)
+
+    Sistema sistema;
+
+    public PCB currentProcess;
+    private int MAX_INSTRUCTIONS = 5;
 
     public CPU(Memory _mem, boolean _debug) { // ref a MEMORIA passada na criacao da CPU
         maxInt = 32767;            // capacidade de representacao modelada
@@ -86,8 +90,63 @@ public class CPU {
         irpt = Interrupts.NONE;  // Clear interrupts
     }
 
+    public void run() {
+        while (true) {
+            sistema.readCpuMutex.acquireUninterruptibly(); // Espera sinal do scheduler
 
-    public void run(int pid, GM gm) {                               // execucao da CPU supoe que o contexto da CPU, vide acima,
+            if (currentProcess != null) {
+                System.out.println("CPU: executando processo " + currentProcess.processID);
+
+                for (int i = 0; i < MAX_INSTRUCTIONS; i++) {
+                    execOnce(); // roda uma instrução
+                    if( irpt == Interrupts.intIO ){
+                        currentProcess = null;
+                        break;
+                    }
+                    try {
+                        Thread.sleep(900);
+                    } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
+                    }
+                    if (currentProcess == null) break; // processo terminou
+                }
+                sistema.writeCpuMutex.release(); // Libera scheduler para decidir o próximo passo
+            }
+        }
+    }
+
+    public void handleIOInterrupt(PCB process) throws InterruptedException {
+        System.out.println("IO: processo " + process.processID + " pediu por IO");
+        Semaphore IOReturn = new Semaphore(0);
+        sysCall.handle(IOReturn);
+        IOReturn.acquireUninterruptibly();
+        Thread.sleep(2000);
+        System.out.println("IO: processo " + process.processID + " teve retorno de IO");
+        sistema.so.gp.unblock(process.processID);
+    }
+
+    private void execOnce() {
+        PCB processo = currentProcess;
+        if (pc == -1) {
+            return;
+        }
+
+        // Simula execução de uma única instrução
+        runInstruction(processo.processID, sistema.so.gm);
+
+        // Verificar se o processo terminou (por exemplo, instrução STOP)
+        if (isCpuStop()) {
+            System.out.println("Processo " + processo.processID + " terminou.");
+            try {
+                sistema.so.gp.removeRunningProcess(processo.processID);
+                currentProcess = null; // IMPORTANTE
+            } catch (IllegalStateException e) {
+                System.out.println("Processo já foi desalocado.");
+            }
+        }
+    }
+
+    public void runInstruction(int pid, GM gm) {                               // execucao da CPU supoe que o contexto da CPU, vide acima,
         // esta devidamente setado
         cpuStop = false;
         // --------------------------------------------------------------------------------------------------
@@ -281,8 +340,17 @@ public class CPU {
 
                 // Chamadas de sistema
                 case SYSCALL:
-                    sysCall.handle(); // <<<<< aqui desvia para rotina de chamada de sistema, no momento so
+                    PCB process = currentProcess;
+                    new Thread(() -> {
+                        try {
+                            handleIOInterrupt(process);
+                        } catch (InterruptedException e) {
+                            throw new RuntimeException(e);
+                        }
+                    }).start(); // <<<<< aqui desvia para rotina de chamada de sistema, no momento so
                     // temos IO
+                    sistema.so.gp.block(currentProcess.processID);
+                    irpt = Interrupts.intIO;
                     pc++;
                     break;
 
@@ -328,4 +396,7 @@ public class CPU {
         return cpuStop;
     }
 
+    public void setSistema(Sistema sistema) {
+        this.sistema = sistema;
+    }
 }
